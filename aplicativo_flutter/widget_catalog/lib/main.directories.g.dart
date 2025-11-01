@@ -10,17 +10,6 @@
 // **************************************************************************
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'package:widget_catalog/cool_button.dart' as _widget_catalog_cool_button;
 import 'package:widgetbook/widgetbook.dart' as _widgetbook;
 
-final directories = <_widgetbook.WidgetbookNode>[
-  _widgetbook.WidgetbookComponent(
-    name: 'CoolButton',
-    useCases: [
-      _widgetbook.WidgetbookUseCase(
-        name: 'Default',
-        builder: _widget_catalog_cool_button.buildCoolButtonUseCase,
-      ),
-    ],
-  ),
-];
+final directories = <_widgetbook.WidgetbookNode>[];

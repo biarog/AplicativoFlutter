@@ -17,12 +17,32 @@ class MainApp extends StatelessWidget {
       title: 'Fitness Routines',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.light,
-        primarySwatch: Colors.orange,
+        colorScheme: ColorScheme(
+          primary: Colors.orange,
+          secondary: const Color.fromARGB(255, 250, 189, 110),
+          surface: Colors.white,
+          error: Colors.red,
+          onPrimary: Colors.white,
+          onSecondary: Colors.black,
+          onSurface: Colors.black,
+          onError: Colors.white,
+          brightness: Brightness.light
+        ),
+        useMaterial3: true,
       ),
       darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primarySwatch: Colors.deepOrange,
+        colorScheme: ColorScheme(
+          primary: Colors.deepOrange,
+          secondary: const Color.fromARGB(255, 94, 55, 43),
+          surface: Colors.grey[900]!,
+          error: Colors.red,
+          onPrimary: Colors.white,
+          onSecondary: Colors.black,
+          onSurface: Colors.white,
+          onError: Colors.white,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
       ),
       themeMode: ThemeMode.system,
       home: const HomeScreen(),
@@ -63,10 +83,17 @@ class _HomeScreenState extends State<HomeScreen> {
           Text('Your Routines', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+              side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 1.5),
+            ),
             child: ListTile(
               title: Text(routine.name),
               subtitle: Text('${routine.exercises.length} exercises • ~${routine.totalDuration}s'),
               trailing: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                ),
                 child: const Text('Play'),
                 onPressed: () {
                   Navigator.of(context).push(MaterialPageRoute(
@@ -100,23 +127,28 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          onTap: (int idx) => setState(() => _selectedIndex = idx),
-          selectedIconTheme: const IconThemeData(size: 30),
+          onTap: (i) => setState(() => _selectedIndex = i),
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          unselectedItemColor: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.6),
+          selectedIconTheme: IconThemeData(
+            color: Theme.of(context).colorScheme.primary,
+            size: 30,
+          ),
           unselectedIconTheme: const IconThemeData(size: 22),
           items: const [
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(top: 15.0),
+                padding: EdgeInsets.only(top: 10.0),
                 child: Column(children: [Icon(Icons.fitness_center), SizedBox(height: 4), Text('Routines')],)),
               label: ''),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(top: 15.0),
+                padding: EdgeInsets.only(top: 10.0),
                 child: Column(children: [Icon(Icons.calendar_today), SizedBox(height: 4), Text('Calendar')],)),
               label: ''),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(top: 15.0),
+                padding: EdgeInsets.only(top: 10.0),
                 child: Column(children: [Icon(Icons.add_circle_outline), SizedBox(height: 4), Text('Create')],)),
               label: ''),
           ],

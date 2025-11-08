@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+
 import 'models/routine.dart';
 import 'screens/routine_player_screen.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/create_routine_screen.dart';
+import 'widgets/login_dialog.dart';
 
 void main() {
   runApp(const MainApp());
@@ -10,7 +12,7 @@ void main() {
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
-
+  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -120,6 +122,31 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fitness Routines'),
+        actions: [
+          // Top-right login floating action button (placeholder)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12.0, top: 8.0, bottom: 8.0),
+                  child: FloatingActionButton.extended(
+                    onPressed: () async {
+                      final result = await showDialog<LoginResult>(
+                        context: context,
+                        builder: (context) => const LoginDialog(),
+                      );
+                      if (result != null) {
+                        // Placeholder feedback — real login flow will replace this.
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('Login requested for ${result.email}'),
+                        ));
+                      }
+                    },
+                    label: const Text('Login'),
+                    heroTag: 'login_fab',
+                    elevation: 0,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+        ],
       ),
       body: IndexedStack(
         index: _selectedIndex,

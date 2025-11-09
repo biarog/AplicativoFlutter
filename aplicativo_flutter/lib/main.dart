@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'login_firebase/firebase_options.dart';
 
 import 'models/routine.dart';
@@ -37,6 +38,9 @@ class MainApp extends StatelessWidget {
       title: 'Fitness Routines',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        textTheme: GoogleFonts.rubikTextTheme(
+          ThemeData.light().textTheme
+        ),
         colorScheme: ColorScheme(
           primary: Colors.orange,
           secondary: const Color.fromARGB(255, 250, 189, 110),
@@ -51,6 +55,9 @@ class MainApp extends StatelessWidget {
         useMaterial3: true,
       ),
       darkTheme: ThemeData(
+        textTheme: GoogleFonts.rubikTextTheme(
+          ThemeData.dark().textTheme
+        ),
         colorScheme: ColorScheme(
           primary: Colors.deepOrange,
           secondary: const Color.fromARGB(255, 94, 55, 43),

@@ -18,6 +18,7 @@ dependencies:
   google_sign_in: ^7.2.0
   cloud_functions: ^5.6.2
   firebase_storage: ^12.4.10
+  google_fonts: ^6.3.2
   http: ^1.5.0
 
 dev_dependencies:
@@ -27,3 +28,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/

@@ -24,12 +24,15 @@ class CreateAccountDialog extends ConsumerStatefulWidget {
 class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final _emailFieldKey = GlobalKey<FormFieldState<String>>();
+  final _nameFieldKey = GlobalKey<FormFieldState<String>>();
   final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
   final _confirmFieldKey = GlobalKey<FormFieldState<String>>();
   final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _nameFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
   final FocusNode _confirmFocusNode = FocusNode();
 
@@ -41,9 +44,11 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
   @override
   void dispose() {
     _emailController.dispose();
+    _nameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _emailFocusNode.dispose();
+    _nameFocusNode.dispose();
     _passwordFocusNode.dispose();
     _confirmFocusNode.dispose();
     super.dispose();
@@ -94,11 +99,12 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
     });
 
     try {
-      final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
+  final name = _nameController.text.trim();
 
-      // Always create a new user in this dialog via the AuthRepository
-      final auth = await ref.read(authRepositoryProvider).createUserWithEmail(email: email, password: password);
+  // Always create a new user in this dialog via the AuthRepository
+  final auth = await ref.read(authRepositoryProvider).createUserWithEmail(email: email, password: password, displayName: name.isEmpty ? null : name);
       return auth;
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -123,11 +129,12 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
         }
       });
       return null;
-    } catch (e) {
+    } catch (e, st) {
       setState(() {
-        _errorMessage = 'An unexpected error occurred.';
+        // Surface the actual exception message to help debugging.
+        _errorMessage = e.toString();
       });
-      debugPrint('Email/Password auth error: $e');
+      debugPrint('Email/Password auth error: $e\n$st');
       return null;
     } finally {
       if (mounted) setState(() => _isSigningIn = false);
@@ -187,6 +194,22 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+              TextFormField(
+                key: _nameFieldKey,
+                focusNode: _nameFocusNode,
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  hintText: 'Full name (displayed publicly)',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a display name';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
             TextFormField(
               key: _emailFieldKey,
               focusNode: _emailFocusNode,

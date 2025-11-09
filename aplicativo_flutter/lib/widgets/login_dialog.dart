@@ -136,11 +136,12 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
         }
       });
       return null;
-    } catch (e) {
+    } catch (e, st) {
       setState(() {
-        _errorMessage = 'An unexpected error occurred.';
+        // Surface the actual exception message to help debugging.
+        _errorMessage = e.toString();
       });
-      debugPrint('Email/Password auth error: $e');
+      debugPrint('Email/Password auth error: $e\n$st');
       return null;
     } finally {
       if (mounted) {

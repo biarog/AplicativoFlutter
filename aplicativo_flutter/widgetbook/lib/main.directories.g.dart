@@ -11,6 +11,8 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:widgetbook/widgetbook.dart' as _widgetbook;
+import 'package:widgetbook_workspace/account_settings_dialog.dart'
+    as _widgetbook_workspace_account_settings_dialog;
 import 'package:widgetbook_workspace/create_account_dialog.dart'
     as _widgetbook_workspace_create_account_dialog;
 import 'package:widgetbook_workspace/login_dialog.dart'
@@ -29,6 +31,14 @@ final directories = <_widgetbook.WidgetbookNode>[
   _widgetbook.WidgetbookFolder(
     name: 'widgets',
     children: [
+      _widgetbook.WidgetbookLeafComponent(
+        name: 'AccountSettingsDialog',
+        useCase: _widgetbook.WidgetbookUseCase(
+          name: 'Default',
+          builder: _widgetbook_workspace_account_settings_dialog
+              .buildAccountSettingsDialogUseCase,
+        ),
+      ),
       _widgetbook.WidgetbookLeafComponent(
         name: 'CreateAccountDialog',
         useCase: _widgetbook.WidgetbookUseCase(

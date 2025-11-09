@@ -34,14 +34,27 @@ class AuthRepository {
     return null;
   }
 
-  Future<AuthDto?> createUserWithEmail({required String email, required String password}) async {
+  Future<AuthDto?> createUserWithEmail({required String email, required String password, String? displayName}) async {
     final userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-    final user = userCredential.user;
-    if (user != null) {
-      await _upsertUserToFirestore(user);
-      return AuthDto(uid: user.uid, email: user.email, displayName: user.displayName, photoUrl: user.photoURL);
+    final createdUser = userCredential.user;
+    if (createdUser == null) return null;
+
+    User updatedUser = createdUser;
+    // If a displayName was provided, set it on the Firebase user before
+    // upserting to Firestore so the stored 'name' value is populated.
+    if (displayName != null && displayName.isNotEmpty) {
+      try {
+        await updatedUser.updateDisplayName(displayName);
+        // Reload user to ensure the local User object has latest values.
+        await updatedUser.reload();
+        updatedUser = _auth.currentUser ?? updatedUser;
+      } catch (e) {
+        debugPrint('Failed to set displayName: $e');
+      }
     }
-    return null;
+
+    await _upsertUserToFirestore(updatedUser);
+    return AuthDto(uid: updatedUser.uid, email: updatedUser.email, displayName: updatedUser.displayName, photoUrl: updatedUser.photoURL);
   }
 
   Future<AuthDto?> signInWithGoogle() async {
@@ -100,6 +113,21 @@ class AuthRepository {
 
   Future<void> signOut() async {
     await _auth.signOut();
+  }
+
+  /// Update the current user's displayName and upsert the user's Firestore doc.
+  Future<void> updateDisplayName(String displayName) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('No signed-in user');
+    try {
+      await user.updateDisplayName(displayName);
+      await user.reload();
+      final latest = _auth.currentUser ?? user;
+      await _upsertUserToFirestore(latest);
+    } catch (e) {
+      debugPrint('Failed to update displayName: $e');
+      rethrow;
+    }
   }
 
   Future<void> _upsertUserToFirestore(User user) async {

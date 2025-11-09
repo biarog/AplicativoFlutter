@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'login_firebase/firebase_options.dart';
 
 import 'models/routine.dart';
 import 'models/auth_dto.dart';
@@ -10,12 +12,19 @@ import 'screens/create_routine_screen.dart';
 
 import 'widgets/login_dialog.dart';
 import 'widgets/create_account_dialog.dart';
+import 'widgets/account_settings_dialog.dart';
+import 'providers/auth_provider.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(
     const ProviderScope(
       child: MainApp(),
-    )
+    ),
   );
 }
 
@@ -60,14 +69,14 @@ class MainApp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
 
   // Example routine. In a full app you'd load user-created routines from
@@ -124,6 +133,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch auth state to know whether a user is signed in.
+    final authState = ref.watch(authStateChangesProvider);
+    final isLoggedIn = authState.maybeWhen(data: (u) => u != null, orElse: () => false);
     // Build pages on each build so we can use context in children
     final pages = <Widget>[_buildRoutinesPage(), const CalendarScreen(), const CreateRoutineScreen()];
 
@@ -131,11 +143,12 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Fitness Routines'),
         actions: [
-                // Top-right create-account button (placeholder)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6.0, top: 8.0, bottom: 8.0),
-                  child: FloatingActionButton.extended(
-                    onPressed: () async {
+                // Only show Create Account / Login when NOT signed in.
+                if (!isLoggedIn) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6.0, top: 8.0, bottom: 8.0),
+                    child: FloatingActionButton.extended(
+                      onPressed: () async {
                         // Capture the ScaffoldMessenger before the async gap so
                         // we don't use a BuildContext across an await.
                         final messenger = ScaffoldMessenger.of(context);
@@ -150,40 +163,111 @@ class _HomeScreenState extends State<HomeScreen> {
                           ));
                         }
                       },
-                    label: const Text('Create Account'),
-                    heroTag: 'create_account_fab',
-                    elevation: 0,
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      label: const Text('Create Account'),
+                      heroTag: 'create_account_fab',
+                      elevation: 0,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    ),
                   ),
-                ),
 
-                // Top-right login floating action button (placeholder)
-                Padding(
-                  padding: const EdgeInsets.only(right: 12.0, top: 8.0, bottom: 8.0),
-                  child: FloatingActionButton.extended(
-                    onPressed: () async {
-                      // Capture messenger before awaiting the dialog.
-                      final messenger = ScaffoldMessenger.of(context);
-                      final auth = await showDialog<AuthDto?>(
-                        context: context,
-                        builder: (context) => const LoginDialog(),
-                      );
-                      if (!mounted) return;
-                      if (auth != null) {
-                        // Placeholder feedback — real login flow will replace this.
-                        messenger.showSnackBar(SnackBar(
-                          content: Text('Signed in: ${auth.email ?? auth.uid}'),
-                        ));
-                      }
-                    },
-                    label: const Text('Login'),
-                    heroTag: 'login_fab',
-                    elevation: 0,
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  // Top-right login floating action button (placeholder)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12.0, top: 8.0, bottom: 8.0),
+                    child: FloatingActionButton.extended(
+                      onPressed: () async {
+                        // Capture messenger before awaiting the dialog.
+                        final messenger = ScaffoldMessenger.of(context);
+                        final auth = await showDialog<AuthDto?>(
+                          context: context,
+                          builder: (context) => const LoginDialog(),
+                        );
+                        if (!mounted) return;
+                        if (auth != null) {
+                          // Placeholder feedback — real login flow will replace this.
+                          messenger.showSnackBar(SnackBar(
+                            content: Text('Signed in: ${auth.email ?? auth.uid}'),
+                          ));
+                        }
+                      },
+                      label: const Text('Login'),
+                      heroTag: 'login_fab',
+                      elevation: 0,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    ),
                   ),
-                ),
+                ] else ...[
+                  // When signed in, show an inline label and a Log Out button.
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: Builder(builder: (context) {
+                      final user = authState.maybeWhen(data: (u) => u, orElse: () => null);
+                      final email = (user?.email ?? '').trim();
+                      final name = (user?.displayName ?? '').trim();
+                      final photo = user?.photoURL;
+
+                      // Determine primary label to show: prefer displayName, then email, then 'Account'.
+                      final displayLabel = name.isNotEmpty ? name : (email.isNotEmpty ? email : 'Account');
+                      final initialSource = (name.isNotEmpty ? name : (email.isNotEmpty ? email : 'U'));
+                      final initial = initialSource.isNotEmpty ? initialSource[0].toUpperCase() : 'U';
+
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (photo != null && photo.isNotEmpty)
+                            CircleAvatar(radius: 16, backgroundImage: NetworkImage(photo))
+                          else
+                            CircleAvatar(radius: 16, child: Text(initial)),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Signed in as', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onPrimary)),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 140),
+                                child: Text(
+                                  displayLabel,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            tooltip: 'Account settings',
+                            onPressed: () async {
+                              // Open the account settings dialog
+                              await showDialog<void>(
+                                context: context,
+                                builder: (_) => const AccountSettingsDialog(),
+                              );
+                            },
+                            icon: const Icon(Icons.settings, size: 20),
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              try {
+                                await ref.read(authRepositoryProvider).signOut();
+                                messenger.showSnackBar(const SnackBar(content: Text('Signed out')));
+                              } catch (e) {
+                                messenger.showSnackBar(SnackBar(content: Text('Sign out failed: $e')));
+                              }
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                            child: const Text('Log Out'),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                ],
         ],
       ),
       body: IndexedStack(

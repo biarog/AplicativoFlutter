@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'models/routine.dart';
+import 'models/auth_dto.dart';
+
 import 'screens/routine_player_screen.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/create_routine_screen.dart';
+
 import 'widgets/login_dialog.dart';
+import 'widgets/create_account_dialog.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(
+    const ProviderScope(
+      child: MainApp(),
+    )
+  );
 }
 
 class MainApp extends StatelessWidget {
@@ -46,7 +55,6 @@ class MainApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      themeMode: ThemeMode.system,
       home: const HomeScreen(),
     );
   }
@@ -123,19 +131,49 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Fitness Routines'),
         actions: [
-          // Top-right login floating action button (placeholder)
+                // Top-right create-account button (placeholder)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6.0, top: 8.0, bottom: 8.0),
+                  child: FloatingActionButton.extended(
+                    onPressed: () async {
+                        // Capture the ScaffoldMessenger before the async gap so
+                        // we don't use a BuildContext across an await.
+                        final messenger = ScaffoldMessenger.of(context);
+                        final auth = await showDialog<AuthDto?>(
+                          context: context,
+                          builder: (_) => CreateAccountDialog(),
+                        );
+                        if (!mounted) return;
+                        if (auth != null) {
+                          messenger.showSnackBar(SnackBar(
+                            content: Text('Signed in: ${auth.email ?? auth.uid}'),
+                          ));
+                        }
+                      },
+                    label: const Text('Create Account'),
+                    heroTag: 'create_account_fab',
+                    elevation: 0,
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+
+                // Top-right login floating action button (placeholder)
                 Padding(
                   padding: const EdgeInsets.only(right: 12.0, top: 8.0, bottom: 8.0),
                   child: FloatingActionButton.extended(
                     onPressed: () async {
-                      final result = await showDialog<LoginResult>(
+                      // Capture messenger before awaiting the dialog.
+                      final messenger = ScaffoldMessenger.of(context);
+                      final auth = await showDialog<AuthDto?>(
                         context: context,
                         builder: (context) => const LoginDialog(),
                       );
-                      if (result != null) {
+                      if (!mounted) return;
+                      if (auth != null) {
                         // Placeholder feedback — real login flow will replace this.
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('Login requested for ${result.email}'),
+                        messenger.showSnackBar(SnackBar(
+                          content: Text('Signed in: ${auth.email ?? auth.uid}'),
                         ));
                       }
                     },

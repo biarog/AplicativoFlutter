@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/calendar.dart';
 
 class CalendarScreen extends StatelessWidget {
   const CalendarScreen({super.key});
@@ -6,10 +7,8 @@ class CalendarScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Calendar')),
-      body: const Center(
-        child: Text('Calendar placeholder — choose when routines will happen.'),
-      ),
+      appBar: AppBar(title: const Text('Agenda')),
+      body: const CalendarWidget(),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'login_firebase/firebase_options.dart';
 
 import 'models/routine.dart';
@@ -153,7 +154,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fitness Routines'),
+        title: Row(
+          children: [
+            Expanded(
+              child: AutoSizeText(
+                'Fitness Routines',
+                maxLines: 1,
+                minFontSize: 10,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+          ],
+        ),
         actions: [
                 // Only show Create Account / Login when NOT signed in.
                 if (!isLoggedIn) ...[

@@ -5,7 +5,7 @@ class YouTubePlayerWidget extends StatefulWidget {
 	final String url;
 	final Duration startAt;
 
-	const YouTubePlayerWidget({Key? key, required this.url, this.startAt = Duration.zero}) : super(key: key);
+	const YouTubePlayerWidget({super.key, required this.url, this.startAt = Duration.zero});
 
 	@override
 	State<YouTubePlayerWidget> createState() => _YouTubePlayerWidgetState();

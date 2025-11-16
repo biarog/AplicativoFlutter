@@ -5,7 +5,9 @@ class Routine {
 
   Routine({required this.id, required this.name, required this.exercises});
 
-  int get totalDuration => exercises.fold(0, (p, e) => p + e.seconds);
+  // Total duration counts only timed exercises
+  int get totalDuration =>
+      exercises.whereType<TimedExercise>().fold<int>(0, (p, e) => p + e.seconds);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -22,14 +24,78 @@ class Routine {
   }
 }
 
-class Exercise {
+/// Base exercise type. Concrete types: [TimedExercise], [CountingExercise].
+abstract class Exercise {
   final String name;
+
+  Exercise({required this.name});
+
+  Map<String, dynamic> toJson();
+
+  /// Polymorphic deserialization. Uses `type` field when present. Falls back
+  /// to checking for `seconds` to maintain some backwards compatibility.
+  factory Exercise.fromJson(Map<String, dynamic> json) {
+    final type = (json['type'] as String?)?.toLowerCase();
+    if (type == 'timed' || json.containsKey('seconds')) {
+      return TimedExercise.fromJson(json);
+    }
+
+    // Default to counting if not timed
+    return CountingExercise.fromJson(json);
+  }
+}
+
+class TimedExercise extends Exercise {
   final int seconds;
 
-  Exercise({required this.name, required this.seconds});
+  TimedExercise({required super.name, required this.seconds});
 
-  Map<String, dynamic> toJson() => {'name': name, 'seconds': seconds};
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': 'timed',
+        'name': name,
+        'seconds': seconds,
+      };
 
-  factory Exercise.fromJson(Map<String, dynamic> json) =>
-      Exercise(name: json['name'] ?? '', seconds: json['seconds'] ?? 0);
+  factory TimedExercise.fromJson(Map<String, dynamic> json) => TimedExercise(
+        name: json['name'] ?? '',
+        seconds: (json['seconds'] is int)
+            ? json['seconds'] as int
+            : (int.tryParse('${json['seconds']}') ?? 0),
+      );
+}
+
+class CountingExercise extends Exercise {
+  final int sets;
+  final int reps;
+  final double? weight; // null when no weight is involved
+
+  CountingExercise({
+    required super.name,
+    required this.sets,
+    required this.reps,
+    this.weight,
+  });
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': 'counting',
+        'name': name,
+        'sets': sets,
+        'reps': reps,
+        'weight': weight,
+      };
+
+  factory CountingExercise.fromJson(Map<String, dynamic> json) => CountingExercise(
+        name: json['name'] ?? '',
+        sets: (json['sets'] is int)
+            ? json['sets'] as int
+            : (int.tryParse('${json['sets']}') ?? 0),
+        reps: (json['reps'] is int)
+            ? json['reps'] as int
+            : (int.tryParse('${json['reps']}') ?? 0),
+        weight: json['weight'] == null
+            ? null
+            : (json['weight'] is num ? (json['weight'] as num).toDouble() : double.tryParse('${json['weight']}')),
+      );
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/youtube_player.dart';
 
 class YouTubeTestScreen extends StatelessWidget {
-  const YouTubeTestScreen({Key? key}) : super(key: key);
+  const YouTubeTestScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

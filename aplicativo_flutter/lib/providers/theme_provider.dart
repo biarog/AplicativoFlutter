@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ThemeSettings {
@@ -81,21 +82,21 @@ const List<ThemePreset> kDefaultThemePresets = [
   ThemePreset(
     id: 'blue',
     name: 'Blue',
-    lightPrimary: Color(0xFF0277BD),
-    lightSecondary: Color(0xFF81D4FA),
+    lightPrimary: Color.fromARGB(255, 0, 162, 255),
+    lightSecondary: Color.fromARGB(255, 100, 204, 252),
     lightError: Colors.red,
-    darkPrimary: Color(0xFF01579B),
-    darkSecondary: Color(0xFF0288D1),
+    darkPrimary: Color.fromARGB(255, 43, 100, 255),
+    darkSecondary: Color.fromARGB(255, 36, 58, 118),
     darkError: Colors.red,
   ),
   ThemePreset(
     id: 'green',
     name: 'Green',
-    lightPrimary: Color(0xFF2E7D32),
-    lightSecondary: Color(0xFFA5D6A7),
+    lightPrimary: Color.fromARGB(255, 4, 206, 14),
+    lightSecondary: Color.fromARGB(255, 112, 228, 116),
     lightError: Colors.red,
-    darkPrimary: Color(0xFF1B5E20),
-    darkSecondary: Color(0xFF2E7D32),
+    darkPrimary: Color.fromARGB(255, 28, 145, 48),
+    darkSecondary: Color.fromARGB(255, 28, 82, 30),
     darkError: Colors.red,
   ),
 ];
@@ -103,6 +104,8 @@ const List<ThemePreset> kDefaultThemePresets = [
 class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
   @override
   ThemeSettings build() {
+    final platformIsDark = ui.PlatformDispatcher.instance.platformBrightness == Brightness.dark;
+
     return ThemeSettings(
       lightPrimary: Colors.orange,
       lightSecondary:  Color(0xFFFADB6E),
@@ -110,32 +113,10 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       darkPrimary: Colors.deepOrange,
       darkSecondary:  Color(0xFF5E372B),
       darkError: Colors.red,
-      isDark: false,
+      isDark: platformIsDark,
     );
   }
-
-  // Light setters
-  void setLightPrimary(Color c) => state = state.copyWith(lightPrimary: c);
-  void setLightSecondary(Color c) => state = state.copyWith(lightSecondary: c);
-  void setLightError(Color c) => state = state.copyWith(lightError: c);
-
-  // Dark setters
-  void setDarkPrimary(Color c) => state = state.copyWith(darkPrimary: c);
-  void setDarkSecondary(Color c) => state = state.copyWith(darkSecondary: c);
-  void setDarkError(Color c) => state = state.copyWith(darkError: c);
-
-  // Combined helpers
-  void setBothPrimary(Color c) => state = state.copyWith(lightPrimary: c, darkPrimary: c);
-
-  // convenience: set primary for current mode
-  void setPrimaryColor(Color c) {
-    if (state.isDark) {
-      setDarkPrimary(c);
-    } else {
-      setLightPrimary(c);
-    }
-  }
-
+  
   void setDark(bool v) => state = state.copyWith(isDark: v);
 
   // Presets helpers

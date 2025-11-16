@@ -29,7 +29,7 @@ class WidgetbookApp extends StatelessWidget {
                 brightness: Brightness.light,
                 colorScheme: ColorScheme(
                   primary: Colors.orange,
-                  secondary: const Color.fromARGB(255, 250, 189, 110),
+                  secondary:  Color.fromARGB(255, 250, 189, 110),
                   surface: Colors.white,
                   error: Colors.red,
                   onPrimary: Colors.white,
@@ -47,7 +47,7 @@ class WidgetbookApp extends StatelessWidget {
                 brightness: Brightness.dark,
                 colorScheme: ColorScheme(
                   primary: Colors.deepOrange,
-                  secondary: const Color.fromARGB(255, 94, 55, 43),
+                  secondary:  Color.fromARGB(255, 94, 55, 43),
                   surface: Colors.grey[900]!,
                   error: Colors.red,
                   onPrimary: Colors.white,

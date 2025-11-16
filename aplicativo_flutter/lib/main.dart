@@ -18,6 +18,7 @@ import 'widgets/login_dialog.dart';
 import 'widgets/create_account_dialog.dart';
 import 'widgets/account_settings_dialog.dart';
 import 'providers/auth_provider.dart';
+import 'providers/theme_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,48 +36,48 @@ Future<void> main() async {
   );
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
-  
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(themeSettingsProvider);
+
+    final lightScheme = ColorScheme.light(
+      primary: settings.lightPrimary,
+      secondary: settings.lightSecondary,
+      surface: Colors.white,
+      error: settings.lightError,
+      onPrimary: Colors.white,
+      onSecondary: Colors.black,
+      onSurface: Colors.black,
+      onError: Colors.white,
+      brightness: Brightness.light
+    );
+
+    final darkScheme = ColorScheme.dark(
+      primary: settings.darkPrimary,
+      secondary: settings.darkSecondary,
+      surface: Colors.grey[900]!,
+      error: settings.darkError,
+      onPrimary: Colors.white,
+      onSecondary: Colors.black,
+      onSurface: Colors.white,
+      onError: Colors.white,
+      brightness: Brightness.dark
+    );
+
+    final lightTheme = ThemeData(colorScheme: lightScheme, useMaterial3: true)
+        .copyWith(textTheme: GoogleFonts.rubikTextTheme(ThemeData.light().textTheme));
+    final darkTheme = ThemeData(colorScheme: darkScheme, useMaterial3: true)
+        .copyWith(textTheme: GoogleFonts.rubikTextTheme(ThemeData.dark().textTheme));
+    
     return MaterialApp(
       title: 'Fitness Routines',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        textTheme: GoogleFonts.rubikTextTheme(
-          ThemeData.light().textTheme
-        ),
-        colorScheme: ColorScheme(
-          primary: Colors.orange,
-          secondary: const Color.fromARGB(255, 250, 189, 110),
-          surface: Colors.white,
-          error: Colors.red,
-          onPrimary: Colors.white,
-          onSecondary: Colors.black,
-          onSurface: Colors.black,
-          onError: Colors.white,
-          brightness: Brightness.light
-        ),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        textTheme: GoogleFonts.rubikTextTheme(
-          ThemeData.dark().textTheme
-        ),
-        colorScheme: ColorScheme(
-          primary: Colors.deepOrange,
-          secondary: const Color.fromARGB(255, 94, 55, 43),
-          surface: Colors.grey[900]!,
-          error: Colors.red,
-          onPrimary: Colors.white,
-          onSecondary: Colors.black,
-          onSurface: Colors.white,
-          onError: Colors.white,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: settings.isDark ? ThemeMode.dark : ThemeMode.light,
       home: const HomeScreen(),
     );
   }
@@ -91,52 +92,161 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
-
-  // Example routine. In a full app you'd load user-created routines from
-  // persistent storage or allow creating/editing them.
-  Routine sampleRoutine() => Routine(
-        id: 'sample-1',
-        name: 'Full Body Quick',
-        exercises: [
-          Exercise(name: 'Jumping Jacks', seconds: 30),
-          Exercise(name: 'Push Ups', seconds: 40),
-          Exercise(name: 'Bodyweight Squats', seconds: 45),
-          Exercise(name: 'Plank', seconds: 60),
-        ],
-      );
+  // In-memory list of user-created routines. Replace with persistent
+  // storage (database / Firestore) as needed.
+  final List<Routine> _routines = [];
 
   Widget _buildRoutinesPage() {
-    final routine = sampleRoutine();
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Your Routines', style: Theme.of(context).textTheme.titleLarge),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Your Routines', style: Theme.of(context).textTheme.headlineMedium),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await showModalBottomSheet<void>(
+                    context: context,
+                    builder: (context) {
+                      // capture the Riverpod ref from the stateful widget scope
+                      final localRef = ref;
+                      // derive available colors from presets defined in theme_provider
+                      final presets = localRef.read(themeSettingsProvider.notifier).presets;
+                      final currentIsDark = localRef.read(themeSettingsProvider).isDark;
+                      final availableColors = presets.map((p) => currentIsDark ? p.darkPrimary : p.lightPrimary).toList();
+
+                      return SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.settings),
+                                title: const Text('App Settings'),
+                                onTap: () async {
+                                  Navigator.of(context).pop();
+                                  await showDialog<void>(
+                                    context: context,
+                                    builder: (_) => const AccountSettingsDialog(),
+                                  );
+                                },
+                              ),
+                              const Divider(),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text('Theme', style: Theme.of(context).textTheme.titleMedium),
+                                ),
+                              ),
+                              StatefulBuilder(builder: (context, setState) {
+                                final isDark = localRef.read(themeSettingsProvider).isDark;
+                                return SwitchListTile(
+                                  title: const Text('Dark mode'),
+                                  value: isDark,
+                                  onChanged: (v) {
+                                    localRef.read(themeSettingsProvider.notifier).setDark(v);
+                                    setState(() {});
+                                  },
+                                );
+                              }),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text('Primary color', style: Theme.of(context).textTheme.titleMedium),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                child: Wrap(
+                                  spacing: 12,
+                                  children: availableColors.map((c) {
+                                    return GestureDetector(
+                                      onTap: () {
+                                        localRef.read(themeSettingsProvider.notifier).setPrimaryColor(c);
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: CircleAvatar(
+                                        backgroundColor: c,
+                                        radius: 20,
+                                        child: localRef.read(themeSettingsProvider).primaryColor == c
+                                            ? const Icon(Icons.check, color: Colors.white)
+                                            : null,
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                              const Divider(),
+                              ListTile(
+                                leading: const Icon(Icons.sort),
+                                title: const Text('Sort Routines'),
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sort not implemented')));
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.filter_list),
+                                title: const Text('Filter'),
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filter not implemented')));
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+                icon: const Icon(Icons.more_vert),
+                label: const Text('Options'),
+                style: ElevatedButton.styleFrom(elevation: 0),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0),
-              side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 1.5),
-            ),
-            child: ListTile(
-              title: Text(routine.name),
-              subtitle: Text('${routine.exercises.length} exercises • ~${routine.totalDuration}s'),
-              trailing: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                ),
-                child: const Text('Play'),
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => RoutinePlayerScreen(routine: routine),
-                  ));
+          if (_routines.isEmpty) ...[
+            const Text('No routines yet. Tap Create to add your first routine.'),
+          ] else ...[
+            Expanded(
+              child: ListView.separated(
+                itemCount: _routines.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final routine = _routines[index];
+                  return Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 1.0),
+                    ),
+                    child: ListTile(
+                      title: Text(routine.name),
+                      subtitle: Text('${routine.exercises.length} exercises • ~${routine.totalDuration}s'),
+                      trailing: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                        ),
+                        child: const Text('Play'),
+                        onPressed: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (_) => RoutinePlayerScreen(routine: routine),
+                          ));
+                        },
+                      ),
+                    ),
+                  );
                 },
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          const Text('Tip: Create and save more routines to see them here.'),
+          ],
         ],
       ),
     );
@@ -150,7 +260,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final authState = ref.watch(authStateChangesProvider);
     final isLoggedIn = authState.maybeWhen(data: (u) => u != null, orElse: () => false);
     // Build pages on each build so we can use context in children
-    final pages = <Widget>[_buildRoutinesPage(), const CalendarScreen(), const CreateRoutineScreen()];
+    // The Create tab launches a modal to create a routine and returns it.
+    final pages = <Widget>[_buildRoutinesPage(), const CalendarScreen(), const SizedBox.shrink()];
 
     return Scaffold(
       appBar: AppBar(
@@ -301,7 +412,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          onTap: (i) => setState(() => _selectedIndex = i),
+          onTap: (i) async {
+            if (i == 2) {
+              // Open create routine screen and await a created Routine
+              final result = await Navigator.of(context).push<Routine>(
+                MaterialPageRoute(builder: (_) => const CreateRoutineScreen()),
+              );
+              if (result != null) {
+                setState(() {
+                  _routines.add(result);
+                  _selectedIndex = 0; // show routines after creating
+                });
+              }
+            } else {
+              setState(() => _selectedIndex = i);
+            }
+          },
           selectedItemColor: Theme.of(context).colorScheme.primary,
           unselectedItemColor: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.6),
           selectedIconTheme: IconThemeData(

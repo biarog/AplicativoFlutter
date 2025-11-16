@@ -231,7 +231,11 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         actions: [
           TextButton(
             onPressed: _saveRoutine,
-            child: const Text('Save', style: TextStyle(color: Colors.white)),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+            child: const Text('Save'),
           )
         ],
       ),

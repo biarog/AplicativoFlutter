@@ -111,7 +111,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       // derive available colors from presets defined in theme_provider
                       final presets = localRef.read(themeSettingsProvider.notifier).presets;
                       final currentIsDark = localRef.read(themeSettingsProvider).isDark;
-                      final availableColors = presets.map((p) => currentIsDark ? p.darkPrimary : p.lightPrimary).toList();
 
                       return SafeArea(
                         child: Padding(
@@ -153,17 +152,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                                 child: Align(
                                   alignment: Alignment.centerLeft,
-                                  child: Text('Primary color', style: Theme.of(context).textTheme.titleMedium),
+                                  child: Text('Theme color', style: Theme.of(context).textTheme.titleMedium),
                                 ),
                               ),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
                                 child: Wrap(
                                   spacing: 12,
-                                  children: availableColors.map((c) {
+                                  children: presets.map((p) {
+                                    final c = currentIsDark ? p.darkPrimary : p.lightPrimary;
                                     return GestureDetector(
                                       onTap: () {
-                                        localRef.read(themeSettingsProvider.notifier).setPrimaryColor(c);
+                                        localRef.read(themeSettingsProvider.notifier).applyPresetById(p.id);
                                         Navigator.of(context).pop();
                                       },
                                       child: CircleAvatar(

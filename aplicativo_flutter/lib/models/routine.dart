@@ -27,8 +27,10 @@ class Routine {
 /// Base exercise type. Concrete types: [TimedExercise], [CountingExercise].
 abstract class Exercise {
   final String name;
+  final String? youtubeUrl;
+  final int? youtubeStartSeconds;
 
-  Exercise({required this.name});
+  Exercise({required this.name, this.youtubeUrl, this.youtubeStartSeconds});
 
   Map<String, dynamic> toJson();
 
@@ -48,21 +50,29 @@ abstract class Exercise {
 class TimedExercise extends Exercise {
   final int seconds;
 
-  TimedExercise({required super.name, required this.seconds});
+  TimedExercise({required super.name, required this.seconds, super.youtubeUrl, super.youtubeStartSeconds});
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'timed',
-        'name': name,
-        'seconds': seconds,
-      };
+    'type': 'timed',
+    'name': name,
+    'seconds': seconds,
+    'youtubeUrl': youtubeUrl,
+    'youtubeStartSeconds': youtubeStartSeconds,
+    };
 
   factory TimedExercise.fromJson(Map<String, dynamic> json) => TimedExercise(
-        name: json['name'] ?? '',
-        seconds: (json['seconds'] is int)
-            ? json['seconds'] as int
-            : (int.tryParse('${json['seconds']}') ?? 0),
-      );
+    name: json['name'] ?? '',
+    seconds: (json['seconds'] is int)
+      ? json['seconds'] as int
+      : (int.tryParse('${json['seconds']}') ?? 0),
+    youtubeUrl: json['youtubeUrl'] as String?,
+        youtubeStartSeconds: json['youtubeStartSeconds'] is int
+          ? json['youtubeStartSeconds'] as int
+          : (json['youtubeStartSeconds'] == null
+            ? null
+            : int.tryParse('${json['youtubeStartSeconds']}')),
+    );
 }
 
 class CountingExercise extends Exercise {
@@ -75,6 +85,8 @@ class CountingExercise extends Exercise {
     required this.sets,
     required this.reps,
     this.weight,
+    super.youtubeUrl,
+    super.youtubeStartSeconds,
   });
 
   @override
@@ -84,6 +96,8 @@ class CountingExercise extends Exercise {
         'sets': sets,
         'reps': reps,
         'weight': weight,
+        'youtubeUrl': youtubeUrl,
+        'youtubeStartSeconds': youtubeStartSeconds,
       };
 
   factory CountingExercise.fromJson(Map<String, dynamic> json) => CountingExercise(
@@ -97,5 +111,11 @@ class CountingExercise extends Exercise {
         weight: json['weight'] == null
             ? null
             : (json['weight'] is num ? (json['weight'] as num).toDouble() : double.tryParse('${json['weight']}')),
+      youtubeUrl: json['youtubeUrl'] as String?,
+      youtubeStartSeconds: json['youtubeStartSeconds'] is int
+        ? json['youtubeStartSeconds'] as int
+        : (json['youtubeStartSeconds'] == null
+          ? null
+          : int.tryParse('${json['youtubeStartSeconds']}')),
       );
 }

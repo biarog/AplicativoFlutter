@@ -18,7 +18,7 @@ class Workout {
 }
 
 class CalendarWidget extends StatefulWidget {
-  const CalendarWidget({Key? key}) : super(key: key);
+  const CalendarWidget({super.key});
 
   @override
   State<CalendarWidget> createState() => _CalendarWidgetState();
@@ -99,7 +99,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     final secondary = Theme.of(context).colorScheme.secondary;
 
     return Card(
-      color: secondary.withOpacity(0.12),
+      color: secondary.withAlpha((0.12 * 255).round()),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -109,7 +109,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: primary.withOpacity(0.12),
+                color: primary.withAlpha((0.12 * 255).round()),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.fitness_center, color: primary, size: 28),
@@ -193,7 +193,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                 bg = Theme.of(context).colorScheme.primary;
                 textColor = Colors.white;
               } else if (isSelected) {
-                bg = Theme.of(context).colorScheme.primary.withOpacity(0.16);
+                bg = Theme.of(context).colorScheme.primary.withAlpha((0.16 * 255).round());
               }
 
               return GestureDetector(
@@ -244,7 +244,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     final dateLabel = DateFormat('d MMMM', 'pt_BR').format(_selectedDate!);
 
     return Card(
-      color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+      color: Theme.of(context).colorScheme.primary.withAlpha((0.06 * 255).round()),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12.0),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/routine.dart';
+import '../widgets/youtube_player.dart';
 
 class RoutinePlayerScreen extends StatefulWidget {
   final Routine routine;
@@ -210,6 +211,18 @@ class _RoutinePlayerScreenState extends State<RoutinePlayerScreen> {
                   child: Text('$_secondsRemaining s', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 16),
+                // If exercise has a YouTube link, show the player above controls.
+                if (ex.youtubeUrl != null && ex.youtubeUrl!.isNotEmpty) ...[
+                  SizedBox(
+                    height: 200,
+                    child: YouTubePlayerWidget(
+                      url: ex.youtubeUrl!,
+                      startAt: Duration(seconds: ex.youtubeStartSeconds ?? 0),
+                      autoPlay: _isPlaying,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 LinearProgressIndicator(value: progress().clamp(0.0, 1.0)),
                 const SizedBox(height: 24),
                 Row(

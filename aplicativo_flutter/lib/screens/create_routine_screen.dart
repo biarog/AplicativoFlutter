@@ -19,6 +19,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
   final _setsController = TextEditingController();
   final _repsController = TextEditingController();
   final _weightController = TextEditingController();
+  final _youtubeLinkController = TextEditingController();
+  final _startTimeController = TextEditingController();
 
   _ExerciseType _exerciseType = _ExerciseType.timed;
   bool _useWeight = false;
@@ -33,6 +35,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     _setsController.dispose();
     _repsController.dispose();
     _weightController.dispose();
+    _youtubeLinkController.dispose();
+    _startTimeController.dispose();
     super.dispose();
   }
 
@@ -54,7 +58,13 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         return;
       }
 
-      _exercises.add(TimedExercise(name: name, seconds: seconds));
+        String? youtube = _youtubeLinkController.text.trim();
+        if (youtube.isEmpty) youtube = null;
+        final start = _startTimeController.text.trim().isEmpty
+          ? null
+          : int.tryParse(_startTimeController.text.trim());
+
+        _exercises.add(TimedExercise(name: name, seconds: seconds, youtubeUrl: youtube, youtubeStartSeconds: start));
     } else {
       final sets = int.tryParse(_setsController.text.trim()) ?? 0;
       final reps = int.tryParse(_repsController.text.trim()) ?? 0;
@@ -76,11 +86,19 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         }
       }
 
+      String? youtube = _youtubeLinkController.text.trim();
+      if (youtube.isEmpty) youtube = null;
+        final start = _startTimeController.text.trim().isEmpty
+          ? null
+          : int.tryParse(_startTimeController.text.trim());
+
       _exercises.add(CountingExercise(
         name: name,
         sets: sets,
         reps: reps,
         weight: weight,
+        youtubeUrl: youtube,
+        youtubeStartSeconds: start,
       ));
     }
 
@@ -90,6 +108,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     _setsController.clear();
     _repsController.clear();
     _weightController.clear();
+    _youtubeLinkController.clear();
+    _startTimeController.clear();
     _useWeight = false;
     _exerciseType = _ExerciseType.timed;
 
@@ -153,6 +173,18 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             decoration: const InputDecoration(labelText: 'Duration (seconds)'),
           ),
           const SizedBox(height: 8),
+          TextField(
+            controller: _youtubeLinkController,
+            keyboardType: TextInputType.url,
+            decoration: const InputDecoration(labelText: 'YouTube link (optional)'),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _startTimeController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Start time (seconds, optional)'),
+          ),
+          const SizedBox(height: 8),
         ] else ...[
           Row(
             children: [
@@ -193,6 +225,18 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             ],
           ),
           const SizedBox(height: 8),
+          TextField(
+            controller: _youtubeLinkController,
+            keyboardType: TextInputType.url,
+            decoration: const InputDecoration(labelText: 'YouTube link (optional)'),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _startTimeController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Start time (seconds, optional)'),
+          ),
+          const SizedBox(height: 8),
         ],
         const SizedBox(height: 12),
         Row(
@@ -210,6 +254,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                 _setsController.clear();
                 _repsController.clear();
                 _weightController.clear();
+                _youtubeLinkController.clear();
+                _startTimeController.clear();
                 setState(() {
                   _useWeight = false;
                   _exerciseType = _ExerciseType.timed;
@@ -271,13 +317,23 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                           separatorBuilder: (context, index) => const Divider(),
                         itemBuilder: (context, index) {
                           final e = _exercises[index];
+                          String subtitle;
+                          if (e is TimedExercise) {
+                            subtitle = 'Timed — ${e.seconds}s';
+                          } else {
+                            final ce = e as CountingExercise;
+                            subtitle = ce.weight != null
+                                ? 'Counting — ${ce.sets}x${ce.reps} @ ${ce.weight}kg'
+                                : 'Counting — ${ce.sets}x${ce.reps}';
+                          }
+
+                          if (e.youtubeUrl != null && e.youtubeUrl!.isNotEmpty) {
+                            subtitle = "$subtitle • Video: ${e.youtubeUrl}${e.youtubeStartSeconds != null ? ' @ ${e.youtubeStartSeconds}s' : ''}";
+                          }
+
                           return ListTile(
                             title: Text(e.name),
-                            subtitle: Text(e is TimedExercise
-                                ? 'Timed — ${e.seconds}s'
-                                : (e as CountingExercise).weight != null
-                                    ? 'Counting — ${e.sets}x${e.reps} @ ${e.weight}kg'
-                                    : 'Counting — ${e.sets}x${e.reps}'),
+                            subtitle: Text(subtitle),
                             trailing: IconButton(
                               icon: const Icon(Icons.delete),
                               onPressed: () => _removeExercise(index),

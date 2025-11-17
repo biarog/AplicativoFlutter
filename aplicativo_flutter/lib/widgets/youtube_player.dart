@@ -5,8 +5,10 @@ class YouTubePlayerWidget extends StatefulWidget {
 	final String url;
 	final Duration startAt;
 	final bool autoPlay;
+	final VoidCallback? onPlay;
+	final ValueChanged<bool>? onPlaybackStateChanged;
 
-	const YouTubePlayerWidget({super.key, required this.url, this.startAt = Duration.zero, this.autoPlay = false});
+	const YouTubePlayerWidget({super.key, required this.url, this.startAt = Duration.zero, this.autoPlay = false, this.onPlay, this.onPlaybackStateChanged});
 
 	@override
 	State<YouTubePlayerWidget> createState() => _YouTubePlayerWidgetState();
@@ -15,6 +17,8 @@ class YouTubePlayerWidget extends StatefulWidget {
 class _YouTubePlayerWidgetState extends State<YouTubePlayerWidget> {
 	late YoutubePlayerController _controller;
 	String? _videoId;
+	bool _playNotified = false;
+	VoidCallback? _controllerListener;
 
 	@override
 	void initState() {
@@ -28,6 +32,20 @@ class _YouTubePlayerWidgetState extends State<YouTubePlayerWidget> {
 				startAt: widget.startAt.inSeconds,
 			),
 		);
+		_controllerListener = () {
+			final playing = _controller.value.isPlaying;
+			// notify parent of any playback state changes
+			widget.onPlaybackStateChanged?.call(playing);
+			if (playing && !_playNotified) {
+				_playNotified = true;
+				widget.onPlay?.call();
+			}
+			if (!playing) {
+				// allow future notifications when playback restarts
+				_playNotified = false;
+			}
+		};
+		_controller.addListener(_controllerListener!);
 	}
 
 	@override
@@ -37,10 +55,12 @@ class _YouTubePlayerWidgetState extends State<YouTubePlayerWidget> {
 		if (newId != _videoId) {
 			_videoId = newId;
 			if (_videoId != null && _videoId!.isNotEmpty) {
-				_controller.load(_videoId!, startAt: widget.startAt.inSeconds);
-				// only play if parent explicitly requests autoplay
+				// use `cue` when not autoplaying so the video is prepared but not started
 				if (widget.autoPlay) {
+					_controller.load(_videoId!, startAt: widget.startAt.inSeconds);
 					_controller.play();
+				} else {
+					_controller.cue(_videoId!, startAt: widget.startAt.inSeconds);
 				}
 			}
 		}
@@ -61,6 +81,7 @@ class _YouTubePlayerWidgetState extends State<YouTubePlayerWidget> {
 
 	@override
 	void dispose() {
+		if (_controllerListener != null) _controller.removeListener(_controllerListener!);
 		_controller.dispose();
 		super.dispose();
 	}

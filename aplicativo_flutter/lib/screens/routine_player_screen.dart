@@ -22,6 +22,8 @@ class _RoutinePlayerScreenState extends State<RoutinePlayerScreen> {
   int? _totalSets;
   Timer? _ticker;
   bool _isPlaying = false;
+  bool _awaitingVideo = false;
+  bool _videoPlaying = false;
 
   @override
   void initState() {
@@ -49,8 +51,41 @@ class _RoutinePlayerScreenState extends State<RoutinePlayerScreen> {
         ? widget.routine.exercises[_currentIndex]
         : null;
     if (ex is! TimedExercise) return; // only start for timed exercises
-    if (_isPlaying) return;
+    if (_ticker != null) return; // already running
+
+    // If exercise has a YouTube video, either start immediately if it's already playing
+    // or wait for the player to begin playback (onPlaybackStateChanged) before starting timer.
+    if (ex.youtubeUrl != null && ex.youtubeUrl!.isNotEmpty) {
+      setState(() {
+        _isPlaying = true; // reflect play intent in UI
+      });
+
+      if (_videoPlaying) {
+        // video already playing -> start timer now
+        setState(() => _awaitingVideo = false);
+        _startTimer();
+      } else {
+        // video not yet playing -> wait for onPlay/onPlayback to trigger start
+        setState(() => _awaitingVideo = true);
+      }
+      return;
+    }
+
     setState(() => _isPlaying = true);
+    _startTimer();
+  }
+
+  void _pause() {
+    _ticker?.cancel();
+    _ticker = null;
+    setState(() {
+      _isPlaying = false;
+      _awaitingVideo = false;
+    });
+  }
+
+  void _startTimer() {
+    if (_ticker != null) return;
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_secondsRemaining > 0) {
         setState(() => _secondsRemaining -= 1);
@@ -58,12 +93,6 @@ class _RoutinePlayerScreenState extends State<RoutinePlayerScreen> {
         _nextInternal();
       }
     });
-  }
-
-  void _pause() {
-    _ticker?.cancel();
-    _ticker = null;
-    setState(() => _isPlaying = false);
   }
 
   void _nextInternal() {
@@ -219,6 +248,25 @@ class _RoutinePlayerScreenState extends State<RoutinePlayerScreen> {
                       url: ex.youtubeUrl!,
                       startAt: Duration(seconds: ex.youtubeStartSeconds ?? 0),
                       autoPlay: _isPlaying,
+                      onPlay: () {
+                        if (!_awaitingVideo) return;
+                        // start timer when video actually begins playback
+                        setState(() {
+                          _awaitingVideo = false;
+                        });
+                        _startTimer();
+                      },
+                      onPlaybackStateChanged: (playing) {
+                        // keep track of current playback state so we can start immediately
+                        // if user presses start while video is already playing
+                        setState(() {
+                          _videoPlaying = playing;
+                        });
+                        if (_awaitingVideo && playing) {
+                          setState(() => _awaitingVideo = false);
+                          _startTimer();
+                        }
+                      },
                     ),
                   ),
                   const SizedBox(height: 16),

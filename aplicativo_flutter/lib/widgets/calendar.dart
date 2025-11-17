@@ -304,8 +304,8 @@ class _CalendarWidgetState extends State<CalendarWidget> {
           decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(8)),
           child: const Icon(Icons.settings, color: Colors.black54),
         ),
-        title: const Text('Configurar Agenda'),
-        subtitle: const Text('Organize seus treinos da semana'),
+        title: Text('Configurar Agenda', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
+        subtitle: Text('Organize seus treinos da semana', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
         onTap: () {},
       ),
     );

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
-class YouTubePlayerWidget extends StatefulWidget {
+class YouTubePlayerWidget extends ConsumerStatefulWidget {
 	final String url;
 	final Duration startAt;
 	final bool autoPlay;
@@ -11,10 +12,10 @@ class YouTubePlayerWidget extends StatefulWidget {
 	const YouTubePlayerWidget({super.key, required this.url, this.startAt = Duration.zero, this.autoPlay = false, this.onPlay, this.onPlaybackStateChanged});
 
 	@override
-	State<YouTubePlayerWidget> createState() => _YouTubePlayerWidgetState();
+	ConsumerState<YouTubePlayerWidget> createState() => _YouTubePlayerWidgetState();
 }
 
-class _YouTubePlayerWidgetState extends State<YouTubePlayerWidget> {
+class _YouTubePlayerWidgetState extends ConsumerState<YouTubePlayerWidget> {
 	late YoutubePlayerController _controller;
 	String? _videoId;
 	bool _playNotified = false;

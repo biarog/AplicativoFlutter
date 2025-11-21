@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 class Workout {
@@ -17,17 +18,17 @@ class Workout {
   });
 }
 
-class CalendarWidget extends StatefulWidget {
+class CalendarWidget extends ConsumerStatefulWidget {
   const CalendarWidget({super.key});
 
   @override
-  State<CalendarWidget> createState() => _CalendarWidgetState();
+  ConsumerState<CalendarWidget> createState() => _CalendarWidgetState();
 }
 
-class _CalendarWidgetState extends State<CalendarWidget> {
   DateTime _viewMonth = DateTime.now();
   DateTime? _selectedDate;
 
+class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
   // Mock data: YYYY-MM-DD -> list of workouts
   late final Map<String, List<Workout>> _workoutsByDate = _buildMockData();
 

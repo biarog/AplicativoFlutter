@@ -1,17 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/routine.dart';
 
-class CreateRoutineScreen extends StatefulWidget {
+class CreateRoutineScreen extends ConsumerStatefulWidget {
   const CreateRoutineScreen({super.key});
 
   @override
-  State<CreateRoutineScreen> createState() => _CreateRoutineScreenState();
+  ConsumerState<CreateRoutineScreen> createState() => _CreateRoutineScreenState();
 }
 
-enum _ExerciseType { timed, counting }
+enum ExerciseType { timed, counting }
 
-class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
+class ExerciseTypeNotifier extends Notifier<ExerciseType> {
+  @override
+  ExerciseType build() => ExerciseType.timed;
+  void set(ExerciseType v) => state = v;
+}
+
+class UseWeightNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void set(bool v) => state = v;
+}
+
+class ExercisesNotifier extends Notifier<List<Exercise>> {
+  @override
+  List<Exercise> build() => <Exercise>[];
+  void setList(List<Exercise> list) => state = list;
+  void addExercise(Exercise e) => state = List.of(state)..add(e);
+  void removeAt(int index) {
+    final list = List<Exercise>.of(state);
+    if (index >= 0 && index < list.length) {
+      list.removeAt(index);
+      state = list;
+    }
+  }
+}
+
+final exerciseTypeProvider = NotifierProvider<ExerciseTypeNotifier, ExerciseType>(ExerciseTypeNotifier.new);
+final useWeightProvider = NotifierProvider<UseWeightNotifier, bool>(UseWeightNotifier.new);
+final exercisesProvider = NotifierProvider<ExercisesNotifier, List<Exercise>>(ExercisesNotifier.new);
+
+class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
   final _routineNameController = TextEditingController();
 
   final _exerciseNameController = TextEditingController();
@@ -21,11 +52,6 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
   final _weightController = TextEditingController();
   final _youtubeLinkController = TextEditingController();
   final _startTimeController = TextEditingController();
-
-  _ExerciseType _exerciseType = _ExerciseType.timed;
-  bool _useWeight = false;
-
-  final List<Exercise> _exercises = [];
 
   @override
   void dispose() {
@@ -48,8 +74,10 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       ));
       return;
     }
+    final formType = ref.read(exerciseTypeProvider);
+    final formUseWeight = ref.read(useWeightProvider);
 
-    if (_exerciseType == _ExerciseType.timed) {
+    if (formType == ExerciseType.timed) {
       final seconds = int.tryParse(_secondsController.text.trim()) ?? 0;
       if (seconds <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -58,13 +86,15 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         return;
       }
 
-        String? youtube = _youtubeLinkController.text.trim();
-        if (youtube.isEmpty) youtube = null;
-        final start = _startTimeController.text.trim().isEmpty
+      String? youtube = _youtubeLinkController.text.trim();
+      if (youtube.isEmpty) youtube = null;
+      final start = _startTimeController.text.trim().isEmpty
           ? null
           : int.tryParse(_startTimeController.text.trim());
 
-        _exercises.add(TimedExercise(name: name, seconds: seconds, youtubeUrl: youtube, youtubeStartSeconds: start));
+      ref.read(exercisesProvider.notifier).addExercise(
+        TimedExercise(name: name, seconds: seconds, youtubeUrl: youtube, youtubeStartSeconds: start),
+      );
     } else {
       final sets = int.tryParse(_setsController.text.trim()) ?? 0;
       final reps = int.tryParse(_repsController.text.trim()) ?? 0;
@@ -76,7 +106,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       }
 
       double? weight;
-      if (_useWeight) {
+      if (formUseWeight) {
         weight = double.tryParse(_weightController.text.trim());
         if (weight == null) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -88,18 +118,20 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
 
       String? youtube = _youtubeLinkController.text.trim();
       if (youtube.isEmpty) youtube = null;
-        final start = _startTimeController.text.trim().isEmpty
+      final start = _startTimeController.text.trim().isEmpty
           ? null
           : int.tryParse(_startTimeController.text.trim());
 
-      _exercises.add(CountingExercise(
-        name: name,
-        sets: sets,
-        reps: reps,
-        weight: weight,
-        youtubeUrl: youtube,
-        youtubeStartSeconds: start,
-      ));
+      ref.read(exercisesProvider.notifier).addExercise(
+        CountingExercise(
+          name: name,
+          sets: sets,
+          reps: reps,
+          weight: weight,
+          youtubeUrl: youtube,
+          youtubeStartSeconds: start,
+        ),
+      );
     }
 
     // Clear exercise inputs
@@ -110,14 +142,12 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     _weightController.clear();
     _youtubeLinkController.clear();
     _startTimeController.clear();
-    _useWeight = false;
-    _exerciseType = _ExerciseType.timed;
-
-    setState(() {});
+    ref.read(exerciseTypeProvider.notifier).set(ExerciseType.timed);
+    ref.read(useWeightProvider.notifier).set(false);
   }
 
   void _removeExercise(int index) {
-    setState(() => _exercises.removeAt(index));
+    ref.read(exercisesProvider.notifier).removeAt(index);
   }
 
   void _saveRoutine() {
@@ -129,7 +159,9 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       return;
     }
 
-    if (_exercises.isEmpty) {
+    final exercises = ref.read(exercisesProvider);
+
+    if (exercises.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Please add at least one exercise to the routine'),
       ));
@@ -139,13 +171,16 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     final routine = Routine(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
-      exercises: List.of(_exercises),
+      exercises: List.of(exercises),
     );
 
     Navigator.of(context).pop(routine);
   }
 
   Widget _buildExerciseForm() {
+    final formType = ref.watch(exerciseTypeProvider);
+    final formUseWeight = ref.watch(useWeightProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -154,19 +189,19 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
           decoration: const InputDecoration(labelText: 'Exercise name'),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<_ExerciseType>(
-          initialValue: _exerciseType,
+        DropdownButtonFormField<ExerciseType>(
+          initialValue: formType,
           decoration: const InputDecoration(labelText: 'Exercise type'),
           items: const [
-            DropdownMenuItem(value: _ExerciseType.timed, child: Text('Timed')),
-            DropdownMenuItem(value: _ExerciseType.counting, child: Text('Counting')),
+            DropdownMenuItem(value: ExerciseType.timed, child: Text('Timed')),
+            DropdownMenuItem(value: ExerciseType.counting, child: Text('Counting')),
           ],
-          onChanged: (_ExerciseType? v) => setState(() {
-            if (v != null) _exerciseType = v;
-          }),
+          onChanged: (ExerciseType? v) {
+            if (v != null) ref.read(exerciseTypeProvider.notifier).set(v);
+          },
         ),
         const SizedBox(height: 8),
-        if (_exerciseType == _ExerciseType.timed) ...[
+        if (formType == ExerciseType.timed) ...[
           TextField(
             controller: _secondsController,
             keyboardType: TextInputType.number,
@@ -209,8 +244,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
           Row(
             children: [
               Checkbox(
-                value: _useWeight,
-                onChanged: (v) => setState(() => _useWeight = v ?? false),
+                value: ref.watch(useWeightProvider),
+                onChanged: (v) => ref.read(useWeightProvider.notifier).set(v ?? false),
               ),
               const Text('Use weight'),
               const SizedBox(width: 12),
@@ -219,7 +254,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                   controller: _weightController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(labelText: 'Weight (kg)'),
-                  enabled: _useWeight,
+                  enabled: formUseWeight,
                 ),
               ),
             ],
@@ -256,10 +291,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                 _weightController.clear();
                 _youtubeLinkController.clear();
                 _startTimeController.clear();
-                setState(() {
-                  _useWeight = false;
-                  _exerciseType = _ExerciseType.timed;
-                });
+                ref.read(exerciseTypeProvider.notifier).set(ExerciseType.timed);
+                ref.read(useWeightProvider.notifier).set(false);
               },
               child: const Text('Clear'),
             ),
@@ -271,6 +304,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final exercises = ref.watch(exercisesProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Routine'),
@@ -307,16 +341,16 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                     const SizedBox(height: 8),
                     const Text('Exercises', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
-                    if (_exercises.isEmpty)
+                    if (exercises.isEmpty)
                       const Text('No exercises added yet')
                     else
                       ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _exercises.length,
+                        itemCount: exercises.length,
                           separatorBuilder: (context, index) => const Divider(),
                         itemBuilder: (context, index) {
-                          final e = _exercises[index];
+                          final e = exercises[index];
                           String subtitle;
                           if (e is TimedExercise) {
                             subtitle = 'Timed — ${e.seconds}s';

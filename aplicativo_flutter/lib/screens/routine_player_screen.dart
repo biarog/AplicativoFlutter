@@ -1,21 +1,22 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/routine.dart';
 import '../widgets/youtube_player.dart';
 
-class RoutinePlayerScreen extends StatefulWidget {
+class RoutinePlayerScreen extends ConsumerStatefulWidget {
   final Routine routine;
 
   const RoutinePlayerScreen({super.key, required this.routine});
 
   @override
-  State<RoutinePlayerScreen> createState() => _RoutinePlayerScreenState();
+  ConsumerState<RoutinePlayerScreen> createState() => _RoutinePlayerScreenState();
 }
 
-class _RoutinePlayerScreenState extends State<RoutinePlayerScreen> {
+class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
   int _currentIndex = 0;
   late int _secondsRemaining;
   int? _setsRemaining;

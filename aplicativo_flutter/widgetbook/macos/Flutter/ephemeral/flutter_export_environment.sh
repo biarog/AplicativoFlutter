@@ -1,11 +1,12 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
-export "FLUTTER_ROOT=C:\Users\matte\develop\flutter"
-export "FLUTTER_APPLICATION_PATH=C:\pasta_repositorios_git\projeto_final_ze\AplicativoFlutter\aplicativo_flutter\widgetbook"
+export "FLUTTER_ROOT=C:\Users\beatr\Bia\Trabalhos Facul\Flutter\flutter"
+export "FLUTTER_APPLICATION_PATH=C:\Users\beatr\Bia\Trabalhos Facul\Flutter\Trabalho\AplicativoFlutter\aplicativo_flutter\widgetbook"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_BUILD_DIR=build"
 export "FLUTTER_BUILD_NAME=0.1.0"
 export "FLUTTER_BUILD_NUMBER=0.1.0"
+export "FLUTTER_CLI_BUILD_MODE=debug"
 export "DART_OBFUSCATION=false"
 export "TRACK_WIDGET_CREATION=true"
 export "TREE_SHAKE_ICONS=false"

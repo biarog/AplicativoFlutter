@@ -3,6 +3,7 @@ class AuthDto {
   final String? email;
   final String? displayName;
   final String? photoUrl;
+  final List<String>? routines;
 
-  AuthDto({required this.uid, this.email, this.displayName, this.photoUrl});
+  AuthDto({required this.uid, this.email, this.displayName, this.photoUrl, this.routines});
 }

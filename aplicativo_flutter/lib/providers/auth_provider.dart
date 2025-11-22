@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../models/auth_dto.dart';
+import '../models/routine.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
@@ -29,9 +32,23 @@ class AuthRepository {
     final user = userCredential.user;
     if (user != null) {
       await _upsertUserToFirestore(user);
-      return AuthDto(uid: user.uid, email: user.email, displayName: user.displayName, photoUrl: user.photoURL);
+      final routines = await _fetchRoutinesForUser(user.uid);
+      return AuthDto(uid: user.uid, email: user.email, displayName: user.displayName, photoUrl: user.photoURL, routines: routines);
     }
     return null;
+  }
+
+  /// Public helper to fetch routines for a user and convert them into
+  /// `Routine` model instances. Returns an empty list when none found.
+  Future<List<Routine>> fetchRoutinesForUserAsModels(String uid) async {
+    final maps = await _fetchRoutinesForUser(uid);
+    if (maps == null) return <Routine>[];
+    try {
+      return maps.map((m) => Routine.fromJson(m)).toList();
+    } catch (e) {
+      debugPrint('Failed to convert routine maps to models: $e');
+      return <Routine>[];
+    }
   }
 
   Future<AuthDto?> createUserWithEmail({required String email, required String password, String? displayName}) async {
@@ -53,8 +70,10 @@ class AuthRepository {
       }
     }
 
-    await _upsertUserToFirestore(updatedUser);
-    return AuthDto(uid: updatedUser.uid, email: updatedUser.email, displayName: updatedUser.displayName, photoUrl: updatedUser.photoURL);
+    // When creating a new user, ensure they have an initial empty routines list.
+    await _upsertUserToFirestore(updatedUser, routines: <Map<String, dynamic>>[]);
+    final routines = await _fetchRoutinesForUser(updatedUser.uid);
+    return AuthDto(uid: updatedUser.uid, email: updatedUser.email, displayName: updatedUser.displayName, photoUrl: updatedUser.photoURL, routines: routines);
   }
 
   Future<AuthDto?> signInWithGoogle() async {
@@ -64,7 +83,8 @@ class AuthRepository {
       final user = userCredential.user;
       if (user != null) {
         await _upsertUserToFirestore(user);
-        return AuthDto(uid: user.uid, email: user.email, displayName: user.displayName, photoUrl: user.photoURL);
+        final routines = await _fetchRoutinesForUser(user.uid);
+        return AuthDto(uid: user.uid, email: user.email, displayName: user.displayName, photoUrl: user.photoURL, routines: routines);
       }
       return null;
     }
@@ -102,7 +122,8 @@ class AuthRepository {
     final user = userCredential.user;
     if (user != null) {
       await _upsertUserToFirestore(user);
-      return AuthDto(uid: user.uid, email: user.email, displayName: user.displayName, photoUrl: user.photoURL);
+      final routines = await _fetchRoutinesForUser(user.uid);
+      return AuthDto(uid: user.uid, email: user.email, displayName: user.displayName, photoUrl: user.photoURL, routines: routines);
     }
     return null;
   }
@@ -130,15 +151,173 @@ class AuthRepository {
     }
   }
 
-  Future<void> _upsertUserToFirestore(User user) async {
+  /// Add a routine (as structured map) to a user's routines array.
+  Future<void> addRoutineForUser(String uid, Routine routine) async {
+    final docRef = _firestore.collection('users').doc(uid);
     try {
-      await _firestore.collection('users').doc(user.uid).set({
+      await docRef.update({
+        'routines': FieldValue.arrayUnion([routine.toJson()]),
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      // If update fails (e.g., doc doesn't exist), use set with merge.
+      try {
+        await docRef.set({
+          'routines': FieldValue.arrayUnion([routine.toJson()]),
+          'lastUpdated': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (e2) {
+        debugPrint('Failed to add routine for user $uid: $e2');
+        rethrow;
+      }
+    }
+  }
+
+  /// Remove a routine by id from a user's routines array.
+  Future<void> removeRoutineForUser(String uid, String routineId) async {
+    final docRef = _firestore.collection('users').doc(uid);
+    final maps = await _fetchRoutinesForUser(uid);
+    if (maps == null) return;
+    final filtered = maps.where((m) => (m['id'] ?? '') != routineId).toList();
+    try {
+      await docRef.set({'routines': filtered, 'lastUpdated': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Failed to remove routine $routineId for user $uid: $e');
+      rethrow;
+    }
+  }
+
+  /// Migrate legacy string-encoded routines for a single user to structured maps.
+  /// This reads user's routines, normalizes them using the same decoding logic,
+  /// and writes back the normalized list of maps.
+  Future<void> migrateLegacyRoutinesForUser(String uid) async {
+    final docRef = _firestore.collection('users').doc(uid);
+    final normalized = await _fetchRoutinesForUser(uid);
+    if (normalized == null) return;
+    try {
+      await docRef.set({'routines': normalized, 'lastUpdated': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Failed to migrate routines for user $uid: $e');
+      rethrow;
+    }
+  }
+
+  /// Migrate legacy routines for all users in the `users` collection.
+  /// Use with care (may read/write many documents).
+  Future<void> migrateAllUsers() async {
+    try {
+      final snap = await _firestore.collection('users').get();
+      for (final doc in snap.docs) {
+        await migrateLegacyRoutinesForUser(doc.id);
+      }
+    } catch (e) {
+      debugPrint('Failed to migrate all users: $e');
+      rethrow;
+    }
+  }
+
+  /// Clear all routines for a user (sets an empty list). Useful for delete-all.
+  Future<void> clearRoutinesForUser(String uid) async {
+    final docRef = _firestore.collection('users').doc(uid);
+    try {
+      await docRef.set({'routines': <Map<String, dynamic>>[], 'lastUpdated': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Failed to clear routines for user $uid: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>?> _fetchRoutinesForUser(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      if (!doc.exists) return null;
+      final data = doc.data();
+      if (data == null) return null;
+      final routinesRaw = data['routines'];
+      if (routinesRaw is! List) return null;
+
+      final List<Map<String, dynamic>> routines = [];
+      for (final item in routinesRaw) {
+        if (item is Map) {
+          routines.add(Map<String, dynamic>.from(item));
+          continue;
+        }
+
+        if (item is String) {
+          // Try multiple robust decoding strategies for legacy string entries.
+          Map<String, dynamic>? tryDecodeString(String s) {
+            // 1) direct JSON decode
+            try {
+              final d = jsonDecode(s);
+              if (d is Map<String, dynamic>) return d;
+              if (d is Map) return Map<String, dynamic>.from(d);
+            } catch (_) {}
+
+            // 2) URL-decoded string (in case it was encoded)
+            try {
+              final u = Uri.decodeComponent(s);
+              final d = jsonDecode(u);
+              if (d is Map<String, dynamic>) return d;
+              if (d is Map) return Map<String, dynamic>.from(d);
+            } catch (_) {}
+
+            // 3) Extract JSON-like substring between first '{' and last '}'
+            try {
+              final start = s.indexOf('{');
+              final end = s.lastIndexOf('}');
+              if (start != -1 && end != -1 && end > start) {
+                final sub = s.substring(start, end + 1);
+                final d = jsonDecode(sub);
+                if (d is Map<String, dynamic>) return d;
+                if (d is Map) return Map<String, dynamic>.from(d);
+              }
+            } catch (_) {}
+
+            // 4) Naive single-quote -> double-quote fallback (best-effort)
+            try {
+              final replaced = s.replaceAll("'", '"');
+              final d = jsonDecode(replaced);
+              if (d is Map<String, dynamic>) return d;
+              if (d is Map) return Map<String, dynamic>.from(d);
+            } catch (_) {}
+
+            return null;
+          }
+
+          final decodedMap = tryDecodeString(item);
+          if (decodedMap != null) {
+            routines.add(decodedMap);
+            continue;
+          }
+
+          // Last-resort: preserve the raw string inside a map so the
+          // application can still construct a Routine from it (e.g.
+          // put raw JSON into the `name` field or a `legacy_raw` key).
+          routines.add({'legacy_raw': item});
+        }
+      }
+
+      return routines;
+    } catch (e) {
+      debugPrint('Failed to fetch routines for user $uid: $e');
+      return null;
+    }
+  }
+
+  Future<void> _upsertUserToFirestore(User user, {List<Map<String, dynamic>>? routines}) async {
+    try {
+      final data = {
         'uid': user.uid,
         'name': user.displayName,
         'email': user.email,
         'photoUrl': user.photoURL,
         'lastLogin': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      };
+      // Only include routines if provided. This avoids overwriting existing lists unintentionally.
+      if (routines != null) {
+        data['routines'] = routines;
+      }
+      await _firestore.collection('users').doc(user.uid).set(data, SetOptions(merge: true));
     } catch (e) {
       debugPrint('Failed to upsert user: $e');
     }

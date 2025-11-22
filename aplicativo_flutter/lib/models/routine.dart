@@ -16,11 +16,20 @@ class Routine {
       };
 
   factory Routine.fromJson(Map<String, dynamic> json) {
+    // Handle legacy 'legacy_raw' entries by preserving the raw string in
+    // the routine name so the app can still display something useful.
+    if (json.containsKey('legacy_raw') && json['legacy_raw'] is String) {
+      final raw = json['legacy_raw'] as String;
+      final id = json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString();
+      final name = json['name'] ?? raw;
+      return Routine(id: id, name: name, exercises: <Exercise>[]);
+    }
+
     final ex = (json['exercises'] as List<dynamic>?)
             ?.map((e) => Exercise.fromJson(Map<String, dynamic>.from(e)))
             .toList() ??
         [];
-    return Routine(id: json['id'] ?? '', name: json['name'] ?? '', exercises: ex);
+    return Routine(id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(), name: json['name'] ?? '', exercises: ex);
   }
 }
 

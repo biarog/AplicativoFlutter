@@ -160,8 +160,8 @@ class _SyncThemeBridgeState extends ConsumerState<SyncThemeBridge> {
     theme_provider.ThemePreset? matchedPreset;
     int bestDistance = 1 << 30;
     for (final p in theme_provider.kDefaultThemePresets) {
-      final dLight = _colorDistance(cs.primary.value, p.lightPrimary.value);
-      final dDark = _colorDistance(cs.primary.value, p.darkPrimary.value);
+      final dLight = _colorDistance(cs.primary.toARGB32(), p.lightPrimary.toARGB32());
+      final dDark = _colorDistance(cs.primary.toARGB32(), p.darkPrimary.toARGB32());
       if (dLight == 0 || dDark == 0) {
         matchId = p.id;
         matchedPreset = p;

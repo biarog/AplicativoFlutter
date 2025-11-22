@@ -6,4 +6,14 @@ final sampleAuthDto = AuthDto(
   email: 'jane@example.com',
   displayName: 'Jane Doe',
   photoUrl: null,
+  routines: [
+    {
+      'id': 'sample_1',
+      'name': 'Sample Routine',
+      'exercises': [
+        {'type': 'timed', 'name': 'Jumping Jacks', 'seconds': 30},
+        {'type': 'counting', 'name': 'Push Ups', 'sets': 3, 'reps': 10},
+      ],
+    }
+  ],
 );

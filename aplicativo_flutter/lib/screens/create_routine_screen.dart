@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/routine.dart';
 
@@ -150,7 +152,7 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
     ref.read(exercisesProvider.notifier).removeAt(index);
   }
 
-  void _saveRoutine() {
+  Future<void> _saveRoutine() async {
     final name = _routineNameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -174,7 +176,34 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
       exercises: List.of(exercises),
     );
 
-    Navigator.of(context).pop(routine);
+    // Capture UI handles before any async gaps so we don't use
+    // BuildContext after awaiting (fixes analyzer lint).
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    // If a user is logged in, upload the routine as a structured map
+    // into the user's `routines` array field.
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'routines': FieldValue.arrayUnion([routine.toJson()]),
+          'lastUpdated': FieldValue.serverTimestamp(),
+        });
+        if (!mounted) return;
+        messenger.showSnackBar(const SnackBar(content: Text('Routine saved to your account')));
+        navigator.pop(routine);
+      } catch (e) {
+        if (!mounted) return;
+        messenger.showSnackBar(SnackBar(content: Text('Failed to save routine: $e')));
+        // Still return the routine to the caller so the UI can update locally.
+        navigator.pop(routine);
+      }
+      return;
+    }
+
+    // No signed-in user: just return the routine (local/in-memory save).
+    navigator.pop(routine);
   }
 
   Widget _buildExerciseForm() {

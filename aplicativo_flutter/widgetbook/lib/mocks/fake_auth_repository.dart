@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aplicativo_flutter/models/auth_dto.dart';
 import 'package:aplicativo_flutter/providers/auth_provider.dart';
+import 'package:aplicativo_flutter/models/routine.dart';
 import '../fixtures/sample_user.dart';
 
 /// A very small fake implementation of `AuthRepository` for Widgetbook.
@@ -44,6 +45,38 @@ class FakeAuthRepository implements AuthRepository {
   Future<void> updateDisplayName(String displayName) async {
     // No-op for Widgetbook stories; in stories you can supply a different
     // fixture if you want to show the updated name.
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<List<Routine>> fetchRoutinesForUserAsModels(String uid) async {
+    // Return an empty list for widgetbook stories by default.
+    await Future.delayed(const Duration(milliseconds: 50));
+    return <Routine>[];
+  }
+
+  @override
+  Future<void> addRoutineForUser(String uid, Routine routine) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> removeRoutineForUser(String uid, String routineId) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> migrateLegacyRoutinesForUser(String uid) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> migrateAllUsers() async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> clearRoutinesForUser(String uid) async {
     await Future.delayed(const Duration(milliseconds: 50));
   }
 }

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'login_firebase/firebase_options.dart';
@@ -191,6 +192,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sort not implemented')));
                                 },
                               ),
+                              // Delete all routines option inside the options modal
+                              ListTile(
+                                leading: const Icon(Icons.delete_forever),
+                                title: const Text('Delete all routines'),
+                                subtitle: const Text('Remove all saved routines from device and cloud'),
+                                onTap: () async {
+                                  Navigator.of(context).pop();
+                                  final messenger = ScaffoldMessenger.of(context);
+                                  final auth = localRef.read(authStateChangesProvider);
+                                  final user = auth.maybeWhen(data: (u) => u, orElse: () => null);
+                                  if (user == null) {
+                                    messenger.showSnackBar(const SnackBar(content: Text('Not signed in')));
+                                    return;
+                                  }
+
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text('Delete all routines'),
+                                      content: const Text('Are you sure you want to delete all saved routines? This cannot be undone.'),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                                        TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete')),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm != true) return;
+
+                                  try {
+                                    await localRef.read(authRepositoryProvider).clearRoutinesForUser(user.uid);
+                                    if (!mounted) return;
+                                    setState(() => _routines.clear());
+                                    messenger.showSnackBar(const SnackBar(content: Text('All routines deleted')));
+                                  } catch (e) {
+                                    messenger.showSnackBar(SnackBar(content: Text('Failed to delete routines: $e')));
+                                  }
+                                },
+                              ),
                               ListTile(
                                 leading: const Icon(Icons.filter_list),
                                 title: const Text('Filter'),
@@ -230,16 +269,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: ListTile(
                       title: Text(routine.name),
                       subtitle: Text('${routine.exercises.length} exercises • ~${routine.totalDuration}s'),
-                      trailing: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                        ),
-                        child: const Text('Play'),
-                        onPressed: () {
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => RoutinePlayerScreen(routine: routine),
-                          ));
-                        },
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                            ),
+                            child: const Text('Play'),
+                            onPressed: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => RoutinePlayerScreen(routine: routine),
+                              ));
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          // Per-routine delete button
+                          IconButton(
+                            tooltip: 'Delete routine',
+                            color: Theme.of(context).colorScheme.error,
+                            onPressed: () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Delete routine'),
+                                  content: Text('Delete "${routine.name}"? This will remove it from your device and cloud.'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete')),
+                                  ],
+                                ),
+                              );
+                              if (confirm != true) return;
+
+                              try {
+                                // If signed in, attempt to remove from Firestore; otherwise remove locally
+                                final user = ref.read(authStateChangesProvider).maybeWhen(data: (u) => u, orElse: () => null);
+                                if (user != null) {
+                                  await ref.read(authRepositoryProvider).removeRoutineForUser(user.uid, routine.id);
+                                }
+                                if (!mounted) return;
+                                setState(() => _routines.removeWhere((r) => r.id == routine.id));
+                                messenger.showSnackBar(const SnackBar(content: Text('Routine deleted')));
+                              } catch (e) {
+                                messenger.showSnackBar(SnackBar(content: Text('Failed to delete routine: $e')));
+                              }
+                            },
+                            icon: const Icon(Icons.delete_outline),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -252,10 +331,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // Note: `ref.listen` must be used inside the `build` method for
+  // Consumer widgets. The listener is registered in `build()` below.
+
+  Future<void> _loadRoutinesForUser(String uid) async {
+    try {
+      final list = await ref.read(authRepositoryProvider).fetchRoutinesForUserAsModels(uid);
+      if (!mounted) return;
+      setState(() {
+        _routines
+          ..clear()
+          ..addAll(list);
+      });
+    } catch (e) {
+      // ignore errors for now, but keep local list unchanged
+      debugPrint('Failed to load routines for user $uid: $e');
+    }
+  }
+
   // pages are built in build() so they can use current BuildContext
 
   @override
   Widget build(BuildContext context) {
+    // Register listener for auth state changes here (allowed in build()).
+    ref.listen<AsyncValue<User?>>(authStateChangesProvider, (previous, next) {
+      next.whenData((user) {
+        if (user == null) {
+          if (!mounted) return;
+          setState(() => _routines.clear());
+        } else {
+          _loadRoutinesForUser(user.uid);
+        }
+      });
+    });
     // Watch auth state to know whether a user is signed in.
     final authState = ref.watch(authStateChangesProvider);
     final isLoggedIn = authState.maybeWhen(data: (u) => u != null, orElse: () => false);
@@ -292,12 +400,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           context: context,
                           builder: (_) => CreateAccountDialog(),
                         );
-                        if (!mounted) return;
-                        if (auth != null) {
-                          messenger.showSnackBar(SnackBar(
-                            content: Text('Signed in: ${auth.email ?? auth.uid}'),
-                          ));
-                        }
+                            if (!mounted) return;
+                            if (auth != null) {
+                              // Populate in-memory routines immediately from returned AuthDto
+                              try {
+                                setState(() {
+                                  _routines
+                                    ..clear()
+                                    ..addAll((auth.routines ?? <Map<String, dynamic>>[])
+                                        .map((m) {
+                                          try {
+                                            return Routine.fromJson(m);
+                                          } catch (_) {
+                                            return null;
+                                          }
+                                        })
+                                        .whereType<Routine>());
+                                });
+                              } catch (e) {
+                                // If conversion fails, attempt to fetch via repository
+                                try {
+                                  final uid = auth.uid;
+                                  _loadRoutinesForUser(uid);
+                                } catch (_) {}
+                              }
+
+                              messenger.showSnackBar(SnackBar(
+                                content: Text('Signed in: ${auth.email ?? auth.uid}'),
+                              ));
+                            }
                       },
                       label: const Text('Create Account'),
                       heroTag: 'create_account_fab',
@@ -314,17 +445,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onPressed: () async {
                         // Capture messenger before awaiting the dialog.
                         final messenger = ScaffoldMessenger.of(context);
-                        final auth = await showDialog<AuthDto?>(
-                          context: context,
-                          builder: (context) => const LoginDialog(),
-                        );
-                        if (!mounted) return;
-                        if (auth != null) {
-                          // Placeholder feedback — real login flow will replace this.
-                          messenger.showSnackBar(SnackBar(
-                            content: Text('Signed in: ${auth.email ?? auth.uid}'),
-                          ));
-                        }
+                          final auth = await showDialog<AuthDto?>(
+                            context: context,
+                            builder: (context) => const LoginDialog(),
+                          );
+                          if (!mounted) return;
+                          if (auth != null) {
+                            // Populate in-memory routines from returned AuthDto for immediate feedback
+                            try {
+                              setState(() {
+                                _routines
+                                  ..clear()
+                                  ..addAll((auth.routines ?? <Map<String, dynamic>>[])
+                                      .map((m) {
+                                        try {
+                                          return Routine.fromJson(m);
+                                        } catch (_) {
+                                          return null;
+                                        }
+                                      })
+                                      .whereType<Routine>());
+                              });
+                            } catch (e) {
+                              // fallback to fetching from repository if conversion fails
+                              try {
+                                final uid = auth.uid;
+                                _loadRoutinesForUser(uid);
+                              } catch (_) {}
+                            }
+
+                            messenger.showSnackBar(SnackBar(
+                              content: Text('Signed in: ${auth.email ?? auth.uid}'),
+                            ));
+                          }
                       },
                       label: const Text('Login'),
                       heroTag: 'login_fab',
@@ -399,6 +552,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             child: const Text('Log Out'),
                           ),
+                          const SizedBox(width: 6),
                         ],
                       );
                     }),

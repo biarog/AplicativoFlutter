@@ -8,7 +8,6 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'login_firebase/firebase_options.dart';
 import 'l10n/app_localizations.dart';
 
-import 'models/routine.dart';
 import 'models/auth_dto.dart';
 
 import 'screens/routine_player_screen.dart';
@@ -22,6 +21,7 @@ import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/local_routines_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/routine_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -108,19 +108,13 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
-  List<Routine> _routines = [];
 
   Widget _buildRoutinesPage() {
-    // Load routines from local provider
-    ref.listen(localRoutinesProvider, (prev, next) {
-      next.whenData((routines) {
-        if (mounted) {
-          setState(() => _routines = routines);
-        }
-      });
-    });
-
-    return Padding(
+    // Load routines from user provider (combines local + Firebase)
+    final routinesAsync = ref.watch(userRoutinesProvider);
+    
+    return routinesAsync.when(
+      data: (routines) => Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,15 +135,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          if (_routines.isEmpty) ...[
+          if (routines.isEmpty) ...[
             Text(AppLocalizations.of(context)!.noRoutinesYet),
           ] else ...[
             Expanded(
               child: ListView.separated(
-                itemCount: _routines.length,
+                itemCount: routines.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
-                  final routine = _routines[index];
+                  final routine = routines[index];
                   return Card(
                     color: Theme.of(context).colorScheme.tertiary,
                     shape: RoundedRectangleBorder(
@@ -225,6 +219,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ],
+      ),
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(
+        child: Text('Error loading routines: $err'),
       ),
     );
   }
@@ -351,10 +350,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     final messenger = ScaffoldMessenger.of(context);
                     final auth = localRef.read(authStateChangesProvider);
                     final user = auth.maybeWhen(data: (u) => u, orElse: () => null);
-                    if (user == null) {
-                      messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.notSignedIn)));
-                      return;
-                    }
 
                     final l10n = AppLocalizations.of(context)!;
                     final allDeletedMsg = l10n.allRoutinesDeleted;
@@ -373,9 +368,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     if (confirm != true) return;
 
                     try {
-                      await localRef.read(authRepositoryProvider).clearRoutinesForUser(user.uid);
+                      // Clear local routines (always)
+                      final routines = await localRef.read(localRoutinesProvider.future);
+                      for (final routine in routines) {
+                        await localRef.read(localRoutinesProvider.notifier).removeRoutine(routine.id);
+                      }
+                      
+                      // If logged in, also clear from Firebase
+                      if (user != null) {
+                        await localRef.read(authRepositoryProvider).clearRoutinesForUser(user.uid);
+                      }
+                      
                       if (!mounted) return;
-                      setState(() => _routines.clear());
                       messenger.showSnackBar(SnackBar(content: Text(allDeletedMsg)));
                     } catch (e) {
                       messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));

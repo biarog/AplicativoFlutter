@@ -23,7 +23,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
   void initState() {
     super.initState();
     _viewMonth = DateTime.now();
-    _selectedDate = null;
+    _selectedDate = DateTime.now();
   }
 
   bool _isToday(DateTime d) {

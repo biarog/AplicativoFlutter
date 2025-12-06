@@ -33,10 +33,6 @@ migrate_working_dir/
 /build/
 /coverage/
 
-# Localization generated files (keep .arb files, ignore generated .dart files)
-lib/l10n/app_localizations_*.dart
-lib/l10n/app_localizations.dart
-
 # Symbolication related
 app.*.symbols
 
@@ -47,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+**/flutter/ephemeral/
+**/.plugin_symlinks/
+widgetbook/**/flutter/ephemeral/
+widgetbook/**/.plugin_symlinks/

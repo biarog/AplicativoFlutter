@@ -3,9 +3,11 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'login_firebase/firebase_options.dart';
+import 'l10n/app_localizations.dart';
 
 import 'models/routine.dart';
 import 'models/auth_dto.dart';
@@ -19,10 +21,10 @@ import 'widgets/create_account_dialog.dart';
 import 'widgets/account_settings_dialog.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/locale_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize locale data for the `intl` package (used by CalendarWidget)
   await initializeDateFormatting('pt_BR');
   Intl.defaultLocale = 'pt_BR';
   await Firebase.initializeApp(
@@ -42,6 +44,7 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(themeSettingsProvider);
+    final locale = ref.watch(localeProvider);
 
     final lightScheme = ColorScheme.light(
       primary: settings.lightPrimary,
@@ -67,14 +70,23 @@ class MainApp extends ConsumerWidget {
       brightness: Brightness.dark
     );
 
-    final lightTheme = ThemeData(colorScheme: lightScheme, useMaterial3: true)
-        .copyWith(textTheme: GoogleFonts.rubikTextTheme(ThemeData.light().textTheme));
-    final darkTheme = ThemeData(colorScheme: darkScheme, useMaterial3: true)
-        .copyWith(textTheme: GoogleFonts.rubikTextTheme(ThemeData.dark().textTheme));
+    // Use Rubik as primary typeface, but add Zen Maru Gothic fallback so Mandarin text renders with the desired font.
+    final zenFallback = GoogleFonts.zenMaruGothic().fontFamily;
+    final lightTheme = ThemeData(colorScheme: lightScheme, useMaterial3: true).copyWith(
+      textTheme: GoogleFonts.rubikTextTheme(ThemeData.light().textTheme)
+          .apply(fontFamilyFallback: zenFallback != null ? [zenFallback] : null),
+    );
+    final darkTheme = ThemeData(colorScheme: darkScheme, useMaterial3: true).copyWith(
+      textTheme: GoogleFonts.rubikTextTheme(ThemeData.dark().textTheme)
+          .apply(fontFamilyFallback: zenFallback != null ? [zenFallback] : null),
+    );
     
     return MaterialApp(
-      title: 'Fitness Routines',
+      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: locale,
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: settings.isDark ? ThemeMode.dark : ThemeMode.light,
@@ -96,125 +108,192 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // storage (database / Firestore) as needed.
   final List<Routine> _routines = [];
 
+  void _showOptionsModal() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        final localRef = ref;
+        final presets = localRef.read(themeSettingsProvider.notifier).presets;
+        final currentIsDark = localRef.read(themeSettingsProvider).isDark;
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.settings),
+                  title: Text(AppLocalizations.of(context)!.appSettings),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    showDialog<void>(
+                      context: context,
+                      builder: (_) => const AccountSettingsDialog(),
+                    );
+                  },
+                ),
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(AppLocalizations.of(context)!.theme, style: Theme.of(context).textTheme.titleMedium),
+                  ),
+                ),
+                StatefulBuilder(builder: (context, setState) {
+                  final isDark = localRef.read(themeSettingsProvider).isDark;
+                  return SwitchListTile(
+                    title: Text(AppLocalizations.of(context)!.darkMode),
+                    value: isDark,
+                    onChanged: (v) {
+                      localRef.read(themeSettingsProvider.notifier).setDark(v);
+                      setState(() {});
+                    },
+                  );
+                }),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(AppLocalizations.of(context)!.themeColor, style: Theme.of(context).textTheme.titleMedium),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Wrap(
+                    spacing: 12,
+                    children: presets.map((p) {
+                      final c = currentIsDark ? p.darkPrimary : p.lightPrimary;
+                      return GestureDetector(
+                        onTap: () {
+                          localRef.read(themeSettingsProvider.notifier).applyPresetById(p.id);
+                          Navigator.of(context).pop();
+                        },
+                        child: CircleAvatar(
+                          backgroundColor: c,
+                          radius: 20,
+                          child: localRef.read(themeSettingsProvider).primaryColor == c
+                              ? const Icon(Icons.check, color: Colors.white)
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(AppLocalizations.of(context)!.language, style: Theme.of(context).textTheme.titleMedium),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Wrap(
+                    spacing: 8,
+                    children: [
+                      const Locale('en'),
+                      const Locale('pt'),
+                      const Locale('es'),
+                      const Locale('fr'),
+                      const Locale('zh'),
+                    ].map((l) {
+                      final currentLocale = localRef.watch(localeProvider);
+                      final isSelected = (currentLocale?.languageCode ?? '') == l.languageCode;
+                      final localeNames = {
+                        'en': 'English',
+                        'pt': 'Português',
+                        'es': 'Español',
+                        'fr': 'Français',
+                        'zh': '中文',
+                      };
+                      return FilterChip(
+                        label: Text(localeNames[l.languageCode] ?? l.languageCode),
+                        selected: isSelected,
+                        onSelected: (_) {
+                          localRef.read(localeProvider.notifier).setLocale(l);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.sort),
+                  title: Text(AppLocalizations.of(context)!.sortRoutines),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.sortNotImplemented)));
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever),
+                  title: Text(AppLocalizations.of(context)!.deleteAllRoutines),
+                  subtitle: Text(AppLocalizations.of(context)!.removeAllRoutinesDesc),
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    final messenger = ScaffoldMessenger.of(context);
+                    final auth = localRef.read(authStateChangesProvider);
+                    final user = auth.maybeWhen(data: (u) => u, orElse: () => null);
+                    if (user == null) {
+                      messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.notSignedIn)));
+                      return;
+                    }
+
+                    final l10n = AppLocalizations.of(context)!;
+                    final allDeletedMsg = l10n.allRoutinesDeleted;
+                    String getFailedMsg(String err) => l10n.failedToDeleteRoutines(err);
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(l10n.deleteAllRoutines),
+                        content: Text(l10n.deleteAllRoutinesConfirm),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+                          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.delete)),
+                        ],
+                      ),
+                    );
+                    if (confirm != true) return;
+
+                    try {
+                      await localRef.read(authRepositoryProvider).clearRoutinesForUser(user.uid);
+                      if (!mounted) return;
+                      setState(() => _routines.clear());
+                      messenger.showSnackBar(SnackBar(content: Text(allDeletedMsg)));
+                    } catch (e) {
+                      messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.filter_list),
+                  title: Text(AppLocalizations.of(context)!.filter),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.filterNotImplemented)));
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildRoutinesPage() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Your Routines', style: Theme.of(context).textTheme.headlineMedium),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await showModalBottomSheet<void>(
-                    context: context,
-                    builder: (context) {
-                      // capture the Riverpod ref from the stateful widget scope
-                      final localRef = ref;
-                      // derive available colors from presets defined in theme_provider
-                      final presets = localRef.read(themeSettingsProvider.notifier).presets;
-                      final currentIsDark = localRef.read(themeSettingsProvider).isDark;
-
-                      return SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ListTile(
-                                leading: const Icon(Icons.settings),
-                                title: const Text('App Settings'),
-                                onTap: () async {
-                                  Navigator.of(context).pop();
-                                  await showDialog<void>(
-                                    context: context,
-                                    builder: (_) => const AccountSettingsDialog(),
-                                  );
-                                },
-                              ),
-                              const Divider(),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text('Theme', style: Theme.of(context).textTheme.titleMedium),
-                                ),
-                              ),
-                              StatefulBuilder(builder: (context, setState) {
-                                final isDark = localRef.read(themeSettingsProvider).isDark;
-                                return SwitchListTile(
-                                  title: const Text('Dark mode'),
-                                  value: isDark,
-                                  onChanged: (v) {
-                                    localRef.read(themeSettingsProvider.notifier).setDark(v);
-                                    setState(() {});
-                                  },
-                                );
-                              }),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text('Theme color', style: Theme.of(context).textTheme.titleMedium),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                child: Wrap(
-                                  spacing: 12,
-                                  children: presets.map((p) {
-                                    final c = currentIsDark ? p.darkPrimary : p.lightPrimary;
-                                    return GestureDetector(
-                                      onTap: () {
-                                        localRef.read(themeSettingsProvider.notifier).applyPresetById(p.id);
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: CircleAvatar(
-                                        backgroundColor: c,
-                                        radius: 20,
-                                        child: localRef.read(themeSettingsProvider).primaryColor == c
-                                            ? const Icon(Icons.check, color: Colors.white)
-                                            : null,
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                              const Divider(),
-                              ListTile(
-                                leading: const Icon(Icons.sort),
-                                title: const Text('Sort Routines'),
-                                onTap: () {
-                                  Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sort not implemented')));
-                                },
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.filter_list),
-                                title: const Text('Filter'),
-                                onTap: () {
-                                  Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filter not implemented')));
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-                icon: const Icon(Icons.more_vert),
-                label: const Text('Options'),
-                style: ElevatedButton.styleFrom(elevation: 0),
-              ),
-            ],
-          ),
+          Text(AppLocalizations.of(context)!.yourRoutines, style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 12),
           if (_routines.isEmpty) ...[
-            const Text('No routines yet. Tap Create to add your first routine.'),
+            Text(AppLocalizations.of(context)!.noRoutinesYet),
           ] else ...[
             Expanded(
               child: ListView.separated(
@@ -230,16 +309,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: ListTile(
                       title: Text(routine.name),
                       subtitle: Text('${routine.exercises.length} exercises • ~${routine.totalDuration}s'),
-                      trailing: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                        ),
-                        child: const Text('Play'),
-                        onPressed: () {
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => RoutinePlayerScreen(routine: routine),
-                          ));
-                        },
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                            ),
+                            child: Text(AppLocalizations.of(context)!.play),
+                            onPressed: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => RoutinePlayerScreen(routine: routine),
+                              ));
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          // Per-routine delete button
+                          IconButton(
+                            tooltip: 'Delete routine',
+                            color: Theme.of(context).colorScheme.error,
+                            onPressed: () {
+                              final messenger = ScaffoldMessenger.of(context);
+                              final l10n = AppLocalizations.of(context)!;
+                              final deletedMsg = l10n.routineDeleted;
+                              String getFailedMsg(String err) => l10n.failedToDeleteRoutine(err);
+                              showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: Text(l10n.deleteRoutine),
+                                  content: Text(l10n.deleteRoutineConfirm(routine.name)),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.delete)),
+                                  ],
+                                ),
+                              ).then((confirm) async {
+                                if (confirm != true) return;
+                                try {
+                                  final user = ref.read(authStateChangesProvider).maybeWhen(data: (u) => u, orElse: () => null);
+                                  if (user != null) {
+                                    await ref.read(authRepositoryProvider).removeRoutineForUser(user.uid, routine.id);
+                                  }
+                                  if (!mounted) return;
+                                  setState(() => _routines.removeWhere((r) => r.id == routine.id));
+                                  messenger.showSnackBar(SnackBar(content: Text(deletedMsg)));
+                                } catch (e) {
+                                  messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));
+                                }
+                              });
+                            },
+                            icon: const Icon(Icons.delete_outline),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -252,10 +373,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // Note: `ref.listen` must be used inside the `build` method for
+  // Consumer widgets. The listener is registered in `build()` below.
+
+  Future<void> _loadRoutinesForUser(String uid) async {
+    try {
+      final list = await ref.read(authRepositoryProvider).fetchRoutinesForUserAsModels(uid);
+      if (!mounted) return;
+      setState(() {
+        _routines
+          ..clear()
+          ..addAll(list);
+      });
+    } catch (e) {
+      // ignore errors for now, but keep local list unchanged
+      debugPrint('Failed to load routines for user $uid: $e');
+    }
+  }
+
   // pages are built in build() so they can use current BuildContext
 
   @override
   Widget build(BuildContext context) {
+    // Register listener for auth state changes here (allowed in build()).
+    ref.listen<AsyncValue<User?>>(authStateChangesProvider, (previous, next) {
+      next.whenData((user) {
+        if (user == null) {
+          if (!mounted) return;
+          setState(() => _routines.clear());
+        } else {
+          _loadRoutinesForUser(user.uid);
+        }
+      });
+    });
     // Watch auth state to know whether a user is signed in.
     final authState = ref.watch(authStateChangesProvider);
     final isLoggedIn = authState.maybeWhen(data: (u) => u != null, orElse: () => false);
@@ -269,7 +419,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             Expanded(
               child: AutoSizeText(
-                'Fitness Routines',
+                AppLocalizations.of(context)!.appTitle,
                 maxLines: 1,
                 minFontSize: 10,
                 overflow: TextOverflow.ellipsis,
@@ -292,14 +442,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           context: context,
                           builder: (_) => CreateAccountDialog(),
                         );
-                        if (!mounted) return;
-                        if (auth != null) {
+                            if (!mounted) return;
+                            if (auth != null) {
+                              // Populate in-memory routines immediately from returned AuthDto
+                              try {
+                                setState(() {
+                                  _routines
+                                    ..clear()
+                                    ..addAll((auth.routines ?? <Map<String, dynamic>>[])
+                                        .map((m) {
+                                          try {
+                                            return Routine.fromJson(m);
+                                          } catch (_) {
+                                            return null;
+                                          }
+                                        })
+                                        .whereType<Routine>());
+                                });
+                              } catch (e) {
+                                // If conversion fails, attempt to fetch via repository
+                                try {
+                                  final uid = auth.uid;
+                                  _loadRoutinesForUser(uid);
+                                } catch (_) {}
+                              }
+
                           messenger.showSnackBar(SnackBar(
-                            content: Text('Signed in: ${auth.email ?? auth.uid}'),
+                            content: Text(auth.email ?? auth.uid),
                           ));
                         }
                       },
-                      label: const Text('Create Account'),
+                      label: Text(AppLocalizations.of(context)!.createAccount),
                       heroTag: 'create_account_fab',
                       elevation: 0,
                       backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -314,19 +487,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onPressed: () async {
                         // Capture messenger before awaiting the dialog.
                         final messenger = ScaffoldMessenger.of(context);
-                        final auth = await showDialog<AuthDto?>(
-                          context: context,
-                          builder: (context) => const LoginDialog(),
-                        );
-                        if (!mounted) return;
-                        if (auth != null) {
-                          // Placeholder feedback — real login flow will replace this.
+                          final auth = await showDialog<AuthDto?>(
+                            context: context,
+                            builder: (context) => const LoginDialog(),
+                          );
+                          if (!mounted) return;
+                          if (auth != null) {
+                            // Populate in-memory routines from returned AuthDto for immediate feedback
+                            try {
+                              setState(() {
+                                _routines
+                                  ..clear()
+                                  ..addAll((auth.routines ?? <Map<String, dynamic>>[])
+                                      .map((m) {
+                                        try {
+                                          return Routine.fromJson(m);
+                                        } catch (_) {
+                                          return null;
+                                        }
+                                      })
+                                      .whereType<Routine>());
+                              });
+                            } catch (e) {
+                              // fallback to fetching from repository if conversion fails
+                              try {
+                                final uid = auth.uid;
+                                _loadRoutinesForUser(uid);
+                              } catch (_) {}
+                            }
+
                           messenger.showSnackBar(SnackBar(
-                            content: Text('Signed in: ${auth.email ?? auth.uid}'),
+                            content: Text(auth.email ?? auth.uid),
                           ));
                         }
                       },
-                      label: const Text('Login'),
+                      label: Text(AppLocalizations.of(context)!.login),
                       heroTag: 'login_fab',
                       elevation: 0,
                       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -360,7 +555,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Signed in as', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onPrimary)),
+                              Text(AppLocalizations.of(context)!.signedInAs, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onPrimary)),
                               ConstrainedBox(
                                 constraints: const BoxConstraints(maxWidth: 140),
                                 child: Text(
@@ -373,10 +568,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           const SizedBox(width: 12),
                           IconButton(
-                            tooltip: 'Account settings',
-                            onPressed: () async {
-                              // Open the account settings dialog
-                              await showDialog<void>(
+                            tooltip: AppLocalizations.of(context)!.accountSettings,
+                            onPressed: () {
+                              showDialog<void>(
                                 context: context,
                                 builder: (_) => const AccountSettingsDialog(),
                               );
@@ -385,25 +579,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             color: Theme.of(context).colorScheme.onPrimary,
                           ),
                           TextButton(
-                            onPressed: () async {
+                            onPressed: () {
                               final messenger = ScaffoldMessenger.of(context);
-                              try {
-                                await ref.read(authRepositoryProvider).signOut();
-                                messenger.showSnackBar(const SnackBar(content: Text('Signed out')));
-                              } catch (e) {
-                                messenger.showSnackBar(SnackBar(content: Text('Sign out failed: $e')));
-                              }
+                              final signedOutMsg = AppLocalizations.of(context)!.signedOut;
+                              String getFailedMsg(String err) => AppLocalizations.of(context)!.signOutFailed(err);
+                              ref.read(authRepositoryProvider).signOut().then((_) {
+                                if (!mounted) return;
+                                messenger.showSnackBar(SnackBar(content: Text(signedOutMsg)));
+                              }).catchError((e) {
+                                if (!mounted) return;
+                                messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));
+                              });
                             },
                             style: TextButton.styleFrom(
                               foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             ),
-                            child: const Text('Log Out'),
+                            child: Text(AppLocalizations.of(context)!.logOut),
                           ),
+                          const SizedBox(width: 6),
                         ],
                       );
                     }),
                   ),
                 ],
+          
+          // Options button - always visible
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: AppLocalizations.of(context)!.options,
+            onPressed: _showOptionsModal,
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ],
       ),
       body: IndexedStack(
@@ -435,27 +641,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             size: 30,
           ),
           unselectedIconTheme: const IconThemeData(size: 22),
-          items: const [
+          items: [
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(top: 10.0),
-                child: Column(children: [Icon(Icons.fitness_center), SizedBox(height: 4), Text('Routines')],)),
+                padding: const EdgeInsets.only(top: 10.0),
+                child: Column(children: [const Icon(Icons.fitness_center), const SizedBox(height: 4), Text(AppLocalizations.of(context)!.routines)],)),
               label: ''),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(top: 10.0),
-                child: Column(children: [Icon(Icons.calendar_today), SizedBox(height: 4), Text('Calendar')],)),
+                padding: const EdgeInsets.only(top: 10.0),
+                child: Column(children: [const Icon(Icons.calendar_today), const SizedBox(height: 4), Text(AppLocalizations.of(context)!.calendar)],)),
               label: ''),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(top: 10.0),
-                child: Column(children: [Icon(Icons.add_circle_outline), SizedBox(height: 4), Text('Create')],)),
+                padding: const EdgeInsets.only(top: 10.0),
+                child: Column(children: [const Icon(Icons.add_circle_outline), const SizedBox(height: 4), Text(AppLocalizations.of(context)!.create)],)),
               label: ''),
           ],
       ),
     );
   }
 }
-
-// autocompletar nome do exercicio
-// recomendar

@@ -19,7 +19,7 @@ Widget buildCreateRoutineScreenUseCase(BuildContext context) {
       }
 
       // Now it's safe to render the calendar.
-      return ProviderScope(child: CalendarWidget());
+      return const ProviderScope(child: CalendarWidget());
     },
   );
 }

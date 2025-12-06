@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class LocaleNotifier extends Notifier<Locale?> {
   @override
   Locale? build() {
-    // Return null to use system locale by default
-    return null;
+    // Default to English if system locale cannot be determined
+    return const Locale('en');
   }
 
   void setLocale(Locale? locale) => state = locale;

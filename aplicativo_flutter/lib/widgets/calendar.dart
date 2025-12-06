@@ -326,8 +326,8 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(8)),
           child: const Icon(Icons.settings, color: Colors.black54),
         ),
-        title: Text(l10n.setupAgenda, style: TextStyle(color: Theme.of(context).colorScheme.surface)),
-        subtitle: Text(l10n.organizeWeekWorkouts, style: TextStyle(color: Theme.of(context).colorScheme.surface)),
+        title: Text(l10n.setupAgenda, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        subtitle: Text(l10n.organizeWeekWorkouts, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
         onTap: () {},
       ),
     );

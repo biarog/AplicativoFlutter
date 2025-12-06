@@ -177,18 +177,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           const SizedBox(width: 8),
                           // Per-routine delete button
                           IconButton(
-                            tooltip: 'Delete routine',
+                            tooltip: AppLocalizations.of(context)!.deleteRoutine,
                             color: Theme.of(context).colorScheme.error,
                             onPressed: () async {
                               final messenger = ScaffoldMessenger.of(context);
+                              final l10n = AppLocalizations.of(context)!;
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
-                                  title: const Text('Delete routine'),
-                                  content: Text('Delete "${routine.name}"? This will remove it from your device and cloud.'),
+                                  title: Text(l10n.deleteRoutine),
+                                  content: Text(l10n.deleteRoutineConfirm(routine.name)),
                                   actions: [
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete')),
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.delete)),
                                   ],
                                 ),
                               );
@@ -203,9 +204,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   await ref.read(authRepositoryProvider).removeRoutineForUser(user.uid, routine.id);
                                 }
                                 if (!mounted) return;
-                                messenger.showSnackBar(const SnackBar(content: Text('Routine deleted')));
+                                messenger.showSnackBar(SnackBar(content: Text(l10n.routineDeleted)));
                               } catch (e) {
-                                messenger.showSnackBar(SnackBar(content: Text('Failed to delete routine: $e')));
+                                messenger.showSnackBar(SnackBar(content: Text(l10n.failedToDeleteRoutine(e.toString()))));
                               }
                             },
                             icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.primary,),
@@ -223,7 +224,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Center(
-        child: Text('Error loading routines: $err'),
+        child: Text(AppLocalizations.of(context)!.errorLoadingRoutines(err.toString())),
       ),
     );
   }
@@ -239,8 +240,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: ListView(
+              shrinkWrap: true,
               children: [
                 ListTile(
                   leading: const Icon(Icons.settings),
@@ -432,6 +433,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         // Capture the ScaffoldMessenger before the async gap so
                         // we don't use a BuildContext across an await.
                         final messenger = ScaffoldMessenger.of(context);
+                        final l10n = AppLocalizations.of(context)!;
                         final auth = await showDialog<AuthDto?>(
                           context: context,
                           builder: (_) => CreateAccountDialog(),
@@ -439,11 +441,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             if (!mounted) return;
                             if (auth != null) {
                               messenger.showSnackBar(SnackBar(
-                                content: Text('Signed in: ${auth.email ?? auth.uid}'),
+                                content: Text(l10n.signedIn(auth.email ?? auth.uid)),
                               ));
                             }
                       },
-                      label: const Text('Create Account'),
+                      label: Text(AppLocalizations.of(context)!.createAccount),
                       heroTag: 'create_account_fab',
                       elevation: 0,
                       backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -458,6 +460,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onPressed: () async {
                         // Capture messenger before awaiting the dialog.
                         final messenger = ScaffoldMessenger.of(context);
+                        final l10n = AppLocalizations.of(context)!;
                           final auth = await showDialog<AuthDto?>(
                             context: context,
                             builder: (context) => const LoginDialog(),
@@ -465,11 +468,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           if (!mounted) return;
                           if (auth != null) {
                             messenger.showSnackBar(SnackBar(
-                              content: Text('Signed in: ${auth.email ?? auth.uid}'),
+                              content: Text(l10n.signedIn(auth.email ?? auth.uid)),
                             ));
                           }
                       },
-                      label: const Text('Login'),
+                      label: Text(AppLocalizations.of(context)!.login),
                       heroTag: 'login_fab',
                       elevation: 0,
                       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -487,7 +490,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       final photo = user?.photoURL;
 
                       // Determine primary label to show: prefer displayName, then email, then 'Account'.
-                      final displayLabel = name.isNotEmpty ? name : (email.isNotEmpty ? email : 'Account');
+                      final displayLabel = name.isNotEmpty ? name : (email.isNotEmpty ? email : AppLocalizations.of(context)!.account);
                       final initialSource = (name.isNotEmpty ? name : (email.isNotEmpty ? email : 'U'));
                       final initial = initialSource.isNotEmpty ? initialSource[0].toUpperCase() : 'U';
 
@@ -503,7 +506,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Signed in as', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onPrimary)),
+                              Text(AppLocalizations.of(context)!.signedInAs, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onPrimary)),
                               ConstrainedBox(
                                 constraints: const BoxConstraints(maxWidth: 140),
                                 child: Text(
@@ -516,7 +519,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           const SizedBox(width: 12),
                           IconButton(
-                            tooltip: 'Account settings',
+                            tooltip: AppLocalizations.of(context)!.accountSettings,
                             onPressed: () async {
                               // Open the account settings dialog
                               await showDialog<void>(
@@ -530,18 +533,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           TextButton(
                             onPressed: () async {
                               final messenger = ScaffoldMessenger.of(context);
+                              final l10n = AppLocalizations.of(context)!;
                               try {
                                 await ref.read(authRepositoryProvider).signOut();
-                                messenger.showSnackBar(const SnackBar(content: Text('Signed out')));
+                                messenger.showSnackBar(SnackBar(content: Text(l10n.signedOut)));
                               } catch (e) {
-                                messenger.showSnackBar(SnackBar(content: Text('Sign out failed: $e')));
+                                messenger.showSnackBar(SnackBar(content: Text(l10n.signOutFailed(e.toString()))));
                               }
                             },
                             style: TextButton.styleFrom(
                               foregroundColor: Theme.of(context).colorScheme.onPrimary,
                               backgroundColor: Theme.of(context).colorScheme.primary,
                             ),
-                            child: const Text('Log Out'),
+                            child: Text(AppLocalizations.of(context)!.logOut),
                           ),
                           const SizedBox(width: 6),
                         ],
@@ -575,21 +579,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             size: 30,
           ),
           unselectedIconTheme: const IconThemeData(size: 22),
-          items: const [
+          items: [
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(top: 10.0),
-                child: Column(children: [Icon(Icons.fitness_center), SizedBox(height: 4), Text('Routines')],)),
+                padding: const EdgeInsets.only(top: 10.0),
+                child: Column(children: [const Icon(Icons.fitness_center), const SizedBox(height: 4), Text(AppLocalizations.of(context)!.routines)],)),
               label: ''),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(top: 10.0),
-                child: Column(children: [Icon(Icons.calendar_today), SizedBox(height: 4), Text('Calendar')],)),
+                padding: const EdgeInsets.only(top: 10.0),
+                child: Column(children: [const Icon(Icons.calendar_today), const SizedBox(height: 4), Text(AppLocalizations.of(context)!.calendar)],)),
               label: ''),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(top: 10.0),
-                child: Column(children: [Icon(Icons.add_circle_outline), SizedBox(height: 4), Text('Create')],)),
+                padding: const EdgeInsets.only(top: 10.0),
+                child: Column(children: [const Icon(Icons.add_circle_outline), const SizedBox(height: 4), Text(AppLocalizations.of(context)!.create)],)),
               label: ''),
           ],
       ),

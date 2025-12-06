@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/routine.dart';
 import '../providers/completed_routines_provider.dart';
 import '../widgets/youtube_player.dart';
+import '../l10n/app_localizations.dart';
 
 class RoutinePlayerScreen extends ConsumerStatefulWidget {
   final Routine routine;
@@ -175,7 +176,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Rotina "${widget.routine.name}" concluída e registrada no calendário!'),
+      content: Text(AppLocalizations.of(context)!.routineCompletedMessage(widget.routine.name)),
     ));
     
     // Reset to start
@@ -230,14 +231,14 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (ex != null) ...[
-              Text('Exercise ${_currentIndex + 1} of ${widget.routine.exercises.length}',
+              Text(AppLocalizations.of(context)!.exerciseProgress(_currentIndex + 1, widget.routine.exercises.length),
                   style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 8),
               Text(ex.name, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 16),
               if (ex is TimedExercise) ...[
                 Center(
-                  child: Text('$_secondsRemaining s', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                  child: Text(AppLocalizations.of(context)!.secondsShort(_secondsRemaining), style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 16),
                 // If exercise has a YouTube link, show the player above controls.
@@ -298,11 +299,11 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
                 Center(
                   child: Column(
                     children: [
-                      Text('Sets left', style: Theme.of(context).textTheme.bodyMedium),
+                      Text(AppLocalizations.of(context)!.setsLeft, style: Theme.of(context).textTheme.bodyMedium),
                       const SizedBox(height: 8),
                       Text('${_setsRemaining ?? ex.sets}', style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
-                      Text('${ex.reps} reps', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600)),
+                      Text(AppLocalizations.of(context)!.reps(ex.reps), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -329,9 +330,9 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
                               }
                             }
                           : null,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                        child: Text('Complete set', style: TextStyle(fontSize: 16)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                        child: Text(AppLocalizations.of(context)!.completeSet, style: const TextStyle(fontSize: 16)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -343,10 +344,10 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
                   ],
                 ),
               ] else ...[
-                const Center(child: Text('No exercises in this routine')),
+                Center(child: Text(AppLocalizations.of(context)!.noExercisesInRoutine)),
               ],
             ] else ...[
-              const Center(child: Text('No exercises in this routine')),
+              Center(child: Text(AppLocalizations.of(context)!.noExercisesInRoutine)),
             ]
           ],
         ),

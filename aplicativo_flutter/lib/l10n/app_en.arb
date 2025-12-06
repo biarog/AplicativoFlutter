@@ -219,5 +219,35 @@
     "exercisesCount2": "exercises",
     "min": "min",
     "setupAgenda": "Setup Agenda",
-    "organizeWeekWorkouts": "Organize your week workouts"
+    "organizeWeekWorkouts": "Organize your week workouts",
+    "errorLoadingRoutines": "Error loading routines: {error}",
+    "@errorLoadingRoutines": {
+      "placeholders": {
+        "error": {
+          "type": "String"
+        }
+      }
+    },
+    "account": "Account",
+    "configureSchedule": "Configure Schedule",
+    "selectRoutinesForEachDay": "Select routines for each day of the week",
+    "totalScheduledRoutines": "Total scheduled routines: {count}",
+    "@totalScheduledRoutines": {
+      "placeholders": {
+        "count": {
+          "type": "int"
+        }
+      }
+    },
+    "done": "Done",
+    "errorLoadingSchedule": "Error loading schedule",
+    "back": "Back",
+    "loadingRoutines": "Loading routines...",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday"
   }

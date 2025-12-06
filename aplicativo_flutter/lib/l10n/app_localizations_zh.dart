@@ -371,4 +371,56 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get organizeWeekWorkouts => '安排您的每周训练';
+
+  @override
+  String errorLoadingRoutines(String error) {
+    return '加载例程时出错: $error';
+  }
+
+  @override
+  String get account => '账户';
+
+  @override
+  String get configureSchedule => '配置日程';
+
+  @override
+  String get selectRoutinesForEachDay => '为每周的每一天选择例程';
+
+  @override
+  String totalScheduledRoutines(int count) {
+    return '已安排的例程总数: $count';
+  }
+
+  @override
+  String get done => '完成';
+
+  @override
+  String get errorLoadingSchedule => '加载日程时出错';
+
+  @override
+  String get back => '返回';
+
+  @override
+  String get loadingRoutines => '正在加载例程...';
+
+  @override
+  String get monday => '星期一';
+
+  @override
+  String get tuesday => '星期二';
+
+  @override
+  String get wednesday => '星期三';
+
+  @override
+  String get thursday => '星期四';
+
+  @override
+  String get friday => '星期五';
+
+  @override
+  String get saturday => '星期六';
+
+  @override
+  String get sunday => '星期日';
 }

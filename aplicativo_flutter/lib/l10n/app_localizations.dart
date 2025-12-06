@@ -772,6 +772,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Organize your week workouts'**
   String get organizeWeekWorkouts;
+
+  /// No description provided for @errorLoadingRoutines.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading routines: {error}'**
+  String errorLoadingRoutines(String error);
+
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @configureSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure Schedule'**
+  String get configureSchedule;
+
+  /// No description provided for @selectRoutinesForEachDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Select routines for each day of the week'**
+  String get selectRoutinesForEachDay;
+
+  /// No description provided for @totalScheduledRoutines.
+  ///
+  /// In en, this message translates to:
+  /// **'Total scheduled routines: {count}'**
+  String totalScheduledRoutines(int count);
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @errorLoadingSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading schedule'**
+  String get errorLoadingSchedule;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @loadingRoutines.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading routines...'**
+  String get loadingRoutines;
+
+  /// No description provided for @monday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get monday;
+
+  /// No description provided for @tuesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get tuesday;
+
+  /// No description provided for @wednesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get wednesday;
+
+  /// No description provided for @thursday.
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get thursday;
+
+  /// No description provided for @friday.
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get friday;
+
+  /// No description provided for @saturday.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get saturday;
+
+  /// No description provided for @sunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get sunday;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

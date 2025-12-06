@@ -132,5 +132,35 @@
     "exercisesCount2": "exercices",
     "min": "min",
     "setupAgenda": "Configurer l'Agenda",
-    "organizeWeekWorkouts": "Organisez vos entraînements de la semaine"
+    "organizeWeekWorkouts": "Organisez vos entraînements de la semaine",
+    "errorLoadingRoutines": "Erreur lors du chargement des routines: {error}",
+    "@errorLoadingRoutines": {
+      "placeholders": {
+        "error": {
+          "type": "String"
+        }
+      }
+    },
+    "account": "Compte",
+    "configureSchedule": "Configurer l'Agenda",
+    "selectRoutinesForEachDay": "Sélectionnez les routines pour chaque jour de la semaine",
+    "totalScheduledRoutines": "Total des routines programmées: {count}",
+    "@totalScheduledRoutines": {
+      "placeholders": {
+        "count": {
+          "type": "int"
+        }
+      }
+    },
+    "done": "Terminé",
+    "errorLoadingSchedule": "Erreur lors du chargement de l'agenda",
+    "back": "Retour",
+    "loadingRoutines": "Chargement des routines...",
+    "monday": "Lundi",
+    "tuesday": "Mardi",
+    "wednesday": "Mercredi",
+    "thursday": "Jeudi",
+    "friday": "Vendredi",
+    "saturday": "Samedi",
+    "sunday": "Dimanche"
   }

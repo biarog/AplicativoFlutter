@@ -3,13 +3,11 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'login_firebase/firebase_options.dart';
 import 'l10n/app_localizations.dart';
 
-import 'models/routine.dart';
 import 'models/auth_dto.dart';
 
 import 'screens/routine_player_screen.dart';
@@ -21,10 +19,13 @@ import 'widgets/create_account_dialog.dart';
 import 'widgets/account_settings_dialog.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/local_routines_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/routine_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Initialize locale data for the `intl` package (used by CalendarWidget)
   await initializeDateFormatting('pt_BR');
   Intl.defaultLocale = 'pt_BR';
   await Firebase.initializeApp(
@@ -44,7 +45,6 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(themeSettingsProvider);
-    final locale = ref.watch(localeProvider);
 
     final lightScheme = ColorScheme.light(
       primary: settings.lightPrimary,
@@ -78,26 +78,22 @@ class MainApp extends ConsumerWidget {
       brightness: Brightness.dark
     );
 
-    // Use Rubik as primary typeface, but add Zen Maru Gothic fallback so Mandarin text renders with the desired font.
-    final zenFallback = GoogleFonts.zenMaruGothic().fontFamily;
-    final lightTheme = ThemeData(colorScheme: lightScheme, useMaterial3: true).copyWith(
-      textTheme: GoogleFonts.rubikTextTheme(ThemeData.light().textTheme)
-          .apply(fontFamilyFallback: zenFallback != null ? [zenFallback] : null),
-    );
-    final darkTheme = ThemeData(colorScheme: darkScheme, useMaterial3: true).copyWith(
-      textTheme: GoogleFonts.rubikTextTheme(ThemeData.dark().textTheme)
-          .apply(fontFamilyFallback: zenFallback != null ? [zenFallback] : null),
-    );
+    final lightTheme = ThemeData(colorScheme: lightScheme, useMaterial3: true)
+        .copyWith(textTheme: GoogleFonts.rubikTextTheme(ThemeData.light().textTheme));
+    final darkTheme = ThemeData(colorScheme: darkScheme, useMaterial3: true)
+        .copyWith(textTheme: GoogleFonts.rubikTextTheme(ThemeData.dark().textTheme));
+    
+    final locale = ref.watch(localeProvider);
     
     return MaterialApp(
-      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+      title: 'Fitness Routines',
       debugShowCheckedModeBanner: false,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: locale,
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: settings.isDark ? ThemeMode.dark : ThemeMode.light,
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: const HomeScreen(),
     );
   }
@@ -112,9 +108,125 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
-  // In-memory list of user-created routines. Replace with persistent
-  // storage (database / Firestore) as needed.
-  final List<Routine> _routines = [];
+
+  Widget _buildRoutinesPage() {
+    // Load routines from user provider (combines local + Firebase)
+    final routinesAsync = ref.watch(userRoutinesProvider);
+    
+    return routinesAsync.when(
+      data: (routines) => Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(AppLocalizations.of(context)!.yourRoutines, style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 4),
+              Container(
+                height: 3,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (routines.isEmpty) ...[
+            Text(AppLocalizations.of(context)!.noRoutinesYet),
+          ] else ...[
+            Expanded(
+              child: ListView.separated(
+                itemCount: routines.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final routine = routines[index];
+                  return Card(
+                    color: Theme.of(context).colorScheme.tertiary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 1.0),
+                    ),
+                    child: ListTile(
+                      title: Text(
+                        routine.name, 
+                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)
+                      ),
+                      subtitle: Text(
+                        '${routine.exercises.length} exercises • ~${routine.totalDuration}s',
+                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                              backgroundColor: Theme.of(context).colorScheme.secondary,
+                            ),
+                            child: Text(AppLocalizations.of(context)!.play, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),),
+                            onPressed: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => RoutinePlayerScreen(routine: routine),
+                              ));
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          // Per-routine delete button
+                          IconButton(
+                            tooltip: 'Delete routine',
+                            color: Theme.of(context).colorScheme.error,
+                            onPressed: () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Delete routine'),
+                                  content: Text('Delete "${routine.name}"? This will remove it from your device and cloud.'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete')),
+                                  ],
+                                ),
+                              );
+                              if (confirm != true) return;
+
+                              try {
+                                // Remover do provider local (que também remove do storage)
+                                await ref.read(localRoutinesProvider.notifier).removeRoutine(routine.id);
+                                // Se logado, remover do Firebase também
+                                final user = ref.read(authStateChangesProvider).maybeWhen(data: (u) => u, orElse: () => null);
+                                if (user != null) {
+                                  await ref.read(authRepositoryProvider).removeRoutineForUser(user.uid, routine.id);
+                                }
+                                if (!mounted) return;
+                                messenger.showSnackBar(const SnackBar(content: Text('Routine deleted')));
+                              } catch (e) {
+                                messenger.showSnackBar(SnackBar(content: Text('Failed to delete routine: $e')));
+                              }
+                            },
+                            icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.primary,),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(
+        child: Text('Error loading routines: $err'),
+      ),
+    );
+  }
 
   void _showOptionsModal() {
     showModalBottomSheet<void>(
@@ -238,10 +350,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     final messenger = ScaffoldMessenger.of(context);
                     final auth = localRef.read(authStateChangesProvider);
                     final user = auth.maybeWhen(data: (u) => u, orElse: () => null);
-                    if (user == null) {
-                      messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.notSignedIn)));
-                      return;
-                    }
 
                     final l10n = AppLocalizations.of(context)!;
                     final allDeletedMsg = l10n.allRoutinesDeleted;
@@ -260,9 +368,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     if (confirm != true) return;
 
                     try {
-                      await localRef.read(authRepositoryProvider).clearRoutinesForUser(user.uid);
+                      // Clear local routines (always)
+                      final routines = await localRef.read(localRoutinesProvider.future);
+                      for (final routine in routines) {
+                        await localRef.read(localRoutinesProvider.notifier).removeRoutine(routine.id);
+                      }
+                      
+                      // If logged in, also clear from Firebase
+                      if (user != null) {
+                        await localRef.read(authRepositoryProvider).clearRoutinesForUser(user.uid);
+                      }
+                      
                       if (!mounted) return;
-                      setState(() => _routines.clear());
                       messenger.showSnackBar(SnackBar(content: Text(allDeletedMsg)));
                     } catch (e) {
                       messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));
@@ -277,144 +394,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildRoutinesPage() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(AppLocalizations.of(context)!.yourRoutines, style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: 8),
-          Container(
-            height: 3,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (_routines.isEmpty) ...[
-            Text(AppLocalizations.of(context)!.noRoutinesYet),
-          ] else ...[
-            Expanded(
-              child: ListView.separated(
-                itemCount: _routines.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final routine = _routines[index];
-                  return Card(
-                    color: Theme.of(context).colorScheme.tertiary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 1.0),
-                    ),
-                    child: ListTile(
-                      title: Text(
-                        routine.name, 
-                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)
-                      ),
-                      subtitle: Text(
-                        '${routine.exercises.length} exercises • ~${routine.totalDuration}s',
-                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                              backgroundColor: Theme.of(context).colorScheme.secondary,
-                            ),
-                            child: Text(AppLocalizations.of(context)!.play, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),),
-                            onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => RoutinePlayerScreen(routine: routine),
-                              ));
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                          // Per-routine delete button
-                          IconButton(
-                            tooltip: 'Delete routine',
-                            color: Theme.of(context).colorScheme.error,
-                            onPressed: () {
-                              final messenger = ScaffoldMessenger.of(context);
-                              final l10n = AppLocalizations.of(context)!;
-                              final deletedMsg = l10n.routineDeleted;
-                              String getFailedMsg(String err) => l10n.failedToDeleteRoutine(err);
-                              showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: Text(l10n.deleteRoutine),
-                                  content: Text(l10n.deleteRoutineConfirm(routine.name)),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.delete)),
-                                  ],
-                                ),
-                              ).then((confirm) async {
-                                if (confirm != true) return;
-                                try {
-                                  final user = ref.read(authStateChangesProvider).maybeWhen(data: (u) => u, orElse: () => null);
-                                  if (user != null) {
-                                    await ref.read(authRepositoryProvider).removeRoutineForUser(user.uid, routine.id);
-                                  }
-                                  if (!mounted) return;
-                                  setState(() => _routines.removeWhere((r) => r.id == routine.id));
-                                  messenger.showSnackBar(SnackBar(content: Text(deletedMsg)));
-                                } catch (e) {
-                                  messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));
-                                }
-                              });
-                            },
-                            icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.primary,),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   // Note: `ref.listen` must be used inside the `build` method for
   // Consumer widgets. The listener is registered in `build()` below.
-
-  Future<void> _loadRoutinesForUser(String uid) async {
-    try {
-      final list = await ref.read(authRepositoryProvider).fetchRoutinesForUserAsModels(uid);
-      if (!mounted) return;
-      setState(() {
-        _routines
-          ..clear()
-          ..addAll(list);
-      });
-    } catch (e) {
-      // ignore errors for now, but keep local list unchanged
-      debugPrint('Failed to load routines for user $uid: $e');
-    }
-  }
 
   // pages are built in build() so they can use current BuildContext
 
   @override
   Widget build(BuildContext context) {
-    // Register listener for auth state changes here (allowed in build()).
-    ref.listen<AsyncValue<User?>>(authStateChangesProvider, (previous, next) {
-      next.whenData((user) {
-        if (user == null) {
-          if (!mounted) return;
-          setState(() => _routines.clear());
-        } else {
-          _loadRoutinesForUser(user.uid);
-        }
-      });
-    });
     // Watch auth state to know whether a user is signed in.
     final authState = ref.watch(authStateChangesProvider);
     final isLoggedIn = authState.maybeWhen(data: (u) => u != null, orElse: () => false);
@@ -427,7 +413,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             Expanded(
               child: AutoSizeText(
-                AppLocalizations.of(context)!.appTitle,
+                'Fitness Routines',
                 maxLines: 1,
                 minFontSize: 10,
                 overflow: TextOverflow.ellipsis,
@@ -452,35 +438,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                             if (!mounted) return;
                             if (auth != null) {
-                              // Populate in-memory routines immediately from returned AuthDto
-                              try {
-                                setState(() {
-                                  _routines
-                                    ..clear()
-                                    ..addAll((auth.routines ?? <Map<String, dynamic>>[])
-                                        .map((m) {
-                                          try {
-                                            return Routine.fromJson(m);
-                                          } catch (_) {
-                                            return null;
-                                          }
-                                        })
-                                        .whereType<Routine>());
-                                });
-                              } catch (e) {
-                                // If conversion fails, attempt to fetch via repository
-                                try {
-                                  final uid = auth.uid;
-                                  _loadRoutinesForUser(uid);
-                                } catch (_) {}
-                              }
-
-                          messenger.showSnackBar(SnackBar(
-                            content: Text(auth.email ?? auth.uid),
-                          ));
-                        }
+                              messenger.showSnackBar(SnackBar(
+                                content: Text('Signed in: ${auth.email ?? auth.uid}'),
+                              ));
+                            }
                       },
-                      label: Text(AppLocalizations.of(context)!.createAccount),
+                      label: const Text('Create Account'),
                       heroTag: 'create_account_fab',
                       elevation: 0,
                       backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -501,35 +464,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           );
                           if (!mounted) return;
                           if (auth != null) {
-                            // Populate in-memory routines from returned AuthDto for immediate feedback
-                            try {
-                              setState(() {
-                                _routines
-                                  ..clear()
-                                  ..addAll((auth.routines ?? <Map<String, dynamic>>[])
-                                      .map((m) {
-                                        try {
-                                          return Routine.fromJson(m);
-                                        } catch (_) {
-                                          return null;
-                                        }
-                                      })
-                                      .whereType<Routine>());
-                              });
-                            } catch (e) {
-                              // fallback to fetching from repository if conversion fails
-                              try {
-                                final uid = auth.uid;
-                                _loadRoutinesForUser(uid);
-                              } catch (_) {}
-                            }
-
-                          messenger.showSnackBar(SnackBar(
-                            content: Text(auth.email ?? auth.uid),
-                          ));
-                        }
+                            messenger.showSnackBar(SnackBar(
+                              content: Text('Signed in: ${auth.email ?? auth.uid}'),
+                            ));
+                          }
                       },
-                      label: Text(AppLocalizations.of(context)!.login),
+                      label: const Text('Login'),
                       heroTag: 'login_fab',
                       elevation: 0,
                       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -563,7 +503,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(AppLocalizations.of(context)!.signedInAs, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onPrimary)),
+                              Text('Signed in as', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onPrimary)),
                               ConstrainedBox(
                                 constraints: const BoxConstraints(maxWidth: 140),
                                 child: Text(
@@ -576,9 +516,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           const SizedBox(width: 12),
                           IconButton(
-                            tooltip: AppLocalizations.of(context)!.accountSettings,
-                            onPressed: () {
-                              showDialog<void>(
+                            tooltip: 'Account settings',
+                            onPressed: () async {
+                              // Open the account settings dialog
+                              await showDialog<void>(
                                 context: context,
                                 builder: (_) => const AccountSettingsDialog(),
                               );
@@ -587,23 +528,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             color: Theme.of(context).colorScheme.onPrimary,
                           ),
                           TextButton(
-                            onPressed: () {
+                            onPressed: () async {
                               final messenger = ScaffoldMessenger.of(context);
-                              final signedOutMsg = AppLocalizations.of(context)!.signedOut;
-                              String getFailedMsg(String err) => AppLocalizations.of(context)!.signOutFailed(err);
-                              ref.read(authRepositoryProvider).signOut().then((_) {
-                                if (!mounted) return;
-                                messenger.showSnackBar(SnackBar(content: Text(signedOutMsg)));
-                              }).catchError((e) {
-                                if (!mounted) return;
-                                messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));
-                              });
+                              try {
+                                await ref.read(authRepositoryProvider).signOut();
+                                messenger.showSnackBar(const SnackBar(content: Text('Signed out')));
+                              } catch (e) {
+                                messenger.showSnackBar(SnackBar(content: Text('Sign out failed: $e')));
+                              }
                             },
                             style: TextButton.styleFrom(
                               foregroundColor: Theme.of(context).colorScheme.onPrimary,
                               backgroundColor: Theme.of(context).colorScheme.primary,
                             ),
-                            child: Text(AppLocalizations.of(context)!.logOut),
+                            child: const Text('Log Out'),
                           ),
                           const SizedBox(width: 6),
                         ],
@@ -637,21 +575,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             size: 30,
           ),
           unselectedIconTheme: const IconThemeData(size: 22),
-          items: [
+          items: const [
             BottomNavigationBarItem(
               icon: Padding(
-                padding: const EdgeInsets.only(top: 10.0),
-                child: Column(children: [const Icon(Icons.fitness_center), const SizedBox(height: 4), Text(AppLocalizations.of(context)!.routines)],)),
+                padding: EdgeInsets.only(top: 10.0),
+                child: Column(children: [Icon(Icons.fitness_center), SizedBox(height: 4), Text('Routines')],)),
               label: ''),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: const EdgeInsets.only(top: 10.0),
-                child: Column(children: [const Icon(Icons.calendar_today), const SizedBox(height: 4), Text(AppLocalizations.of(context)!.calendar)],)),
+                padding: EdgeInsets.only(top: 10.0),
+                child: Column(children: [Icon(Icons.calendar_today), SizedBox(height: 4), Text('Calendar')],)),
               label: ''),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: const EdgeInsets.only(top: 10.0),
-                child: Column(children: [const Icon(Icons.add_circle_outline), const SizedBox(height: 4), Text(AppLocalizations.of(context)!.create)],)),
+                padding: EdgeInsets.only(top: 10.0),
+                child: Column(children: [Icon(Icons.add_circle_outline), SizedBox(height: 4), Text('Create')],)),
               label: ''),
           ],
       ),

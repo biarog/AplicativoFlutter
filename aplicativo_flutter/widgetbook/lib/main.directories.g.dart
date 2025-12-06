@@ -2,6 +2,7 @@
 // coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_import, prefer_relative_imports, directives_ordering
+// ignore_for_file: deprecated_member_use
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 

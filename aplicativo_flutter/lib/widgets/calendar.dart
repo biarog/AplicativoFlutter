@@ -1,24 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-
-import '../l10n/app_localizations.dart';
-
-class Workout {
-  final String title;
-  final String time; // HH:mm
-  final int exercises;
-  final int minutes;
-  final Color color;
-
-  Workout({
-    required this.title,
-    required this.time,
-    required this.exercises,
-    required this.minutes,
-    required this.color,
-  });
-}
+import '../providers/schedule_provider.dart';
+import '../providers/routine_provider.dart';
+import '../providers/completed_routines_provider.dart';
+import '../screens/configure_schedule_screen.dart';
+import '../screens/routine_player_screen.dart';
+import '../models/routine.dart';
 
 class CalendarWidget extends ConsumerStatefulWidget {
   const CalendarWidget({super.key});
@@ -27,41 +15,16 @@ class CalendarWidget extends ConsumerStatefulWidget {
   ConsumerState<CalendarWidget> createState() => _CalendarWidgetState();
 }
 
-  DateTime _viewMonth = DateTime.now();
+class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
+  late DateTime _viewMonth;
   DateTime? _selectedDate;
 
-class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
-  // Mock data: YYYY-MM-DD -> list of workouts
-  late final Map<String, List<Workout>> _workoutsByDate = _buildMockData();
-
-  String _localeTag(BuildContext context) => Localizations.localeOf(context).toLanguageTag();
-
-  List<String> _weekdayLabels(BuildContext context) {
-    // Start on a Sunday to align with the calendar grid.
-    final baseSunday = DateTime(2024, 6, 2);
-    final localeTag = _localeTag(context);
-    return List.generate(7, (index) => DateFormat.E(localeTag).format(baseSunday.add(Duration(days: index))));
+  @override
+  void initState() {
+    super.initState();
+    _viewMonth = DateTime.now();
+    _selectedDate = DateTime.now();
   }
-
-  static Map<String, List<Workout>> _buildMockData() {
-    return {
-      '2024-11-15': [
-        Workout(title: 'Treino de Peito', time: '08:00', exercises: 8, minutes: 45, color: Colors.orange),
-        Workout(title: 'Cardio', time: '18:00', exercises: 1, minutes: 30, color: Colors.red),
-      ],
-      '2024-11-14': [Workout(title: 'Treino de Costas', time: '07:00', exercises: 7, minutes: 40, color: Colors.blue)],
-      '2024-11-12': [Workout(title: 'Treino de Pernas', time: '06:30', exercises: 6, minutes: 50, color: Colors.green)],
-      '2024-11-10': [Workout(title: 'Treino de Braços', time: '19:00', exercises: 5, minutes: 35, color: Colors.purple)],
-      '2024-11-08': [Workout(title: 'Treino de Ombros', time: '17:00', exercises: 6, minutes: 30, color: Colors.teal)],
-      '2024-11-05': [Workout(title: 'HIIT Cardio', time: '12:00', exercises: 1, minutes: 20, color: Colors.redAccent)],
-    };
-  }
-
-  String _formatKey(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
-
-  bool _hasWorkouts(DateTime d) => _workoutsByDate.containsKey(_formatKey(d));
-
-  List<Workout> _workoutsFor(DateTime d) => _workoutsByDate[_formatKey(d)] ?? [];
 
   bool _isToday(DateTime d) {
     final now = DateTime.now();
@@ -98,66 +61,193 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
     return cells;
   }
 
-  Widget _buildTopCard(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    // pick today's workouts if any or a sample routine
-    final todayKey = _formatKey(DateTime.now());
-    final todays = _workoutsByDate[todayKey] ?? [];
-
-    final title = todays.isNotEmpty ? todays.first.title : l10n.todaysWorkout;
-    final time = todays.isNotEmpty ? todays.first.time : '08:00';
-    final info = todays.isNotEmpty
-        ? '${todays.first.exercises} ${l10n.exercisesCount2} · ${todays.first.minutes} ${l10n.min}'
-        : l10n.noWorkoutThisDay;
+  Widget _buildTopCard(BuildContext context, WidgetRef ref) {
+    final scheduleAsync = ref.watch(scheduleProvider);
+    final routinesAsync = ref.watch(userRoutinesProvider);
+    final completedRoutinesAsync = ref.watch(completedRoutinesProvider);
+    
+    final today = DateTime.now();
+    final todayDateString = DateTime(today.year, today.month, today.day).toIso8601String();
 
     final primary = Theme.of(context).colorScheme.primary;
     final secondary = Theme.of(context).colorScheme.secondary;
 
-    return Card(
-      color: secondary.withAlpha((0.12 * 255).round()),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: primary.withAlpha((0.12 * 255).round()),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.fitness_center, color: primary, size: 28),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.todaysWorkout, style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 6),
-                  Row(children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: primary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(time, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+    return scheduleAsync.when(
+      data: (schedule) {
+        final todayRoutineIds = schedule.getRoutineIdsForDay(today.weekday);
+
+        return routinesAsync.when(
+          data: (routines) {
+            return completedRoutinesAsync.when(
+              data: (completedRoutines) {
+                // Filter routines that are scheduled for today but NOT completed
+                final todayRoutinesNotCompleted = <Routine>[];
+                
+                for (final routineId in todayRoutineIds) {
+                  try {
+                    final routine = routines.firstWhere((r) => r.id == routineId);
+                    // Check if routine was NOT completed today
+                    final wasCompletedToday = completedRoutines[routineId]?.contains(todayDateString) ?? false;
+                    
+                    if (!wasCompletedToday) {
+                      todayRoutinesNotCompleted.add(routine);
+                    }
+                  } catch (e) {
+                    // Rotina não encontrada (foi deletada) - limpar do schedule
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      ref.read(scheduleProvider.notifier).removeRoutineFromDay(today.weekday, routineId);
+                    });
+                  }
+                }
+
+                // Build content based on available routines
+                late String title;
+                late String info;
+
+                if (todayRoutinesNotCompleted.isEmpty) {
+                  title = 'Nenhum treino para hoje';
+                  info = 'Todas as rotinas foram completadas!';
+                } else {
+                  title = '${todayRoutinesNotCompleted.length} rotina${todayRoutinesNotCompleted.length > 1 ? 's' : ''}';
+                  
+                  final totalExercises = todayRoutinesNotCompleted.fold<int>(
+                    0,
+                    (sum, routine) => sum + routine.exercises.length,
+                  );
+                  final totalDurationMinutes = todayRoutinesNotCompleted.fold<int>(
+                    0,
+                    (sum, routine) => sum + (routine.totalDuration / 60).round(),
+                  );
+                  
+                  info = '$totalExercises exercícios · $totalDurationMinutes min';
+                }
+
+                return Card(
+                  color: secondary.withAlpha((0.12 * 255).round()),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: primary.withAlpha((0.12 * 255).round()),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.fitness_center, color: primary, size: 28),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Treino de Hoje', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 6),
+                                  Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 6),
+                                  Text(info, style: Theme.of(context).textTheme.bodySmall),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        // List of today's routines
+                        if (todayRoutinesNotCompleted.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Divider(color: primary.withAlpha((0.2 * 255).round()), height: 12),
+                          const SizedBox(height: 8),
+                          ...todayRoutinesNotCompleted.map((routine) {
+                            final exerciseCount = routine.exercises.length;
+                            final durationMinutes = (routine.totalDuration / 60).round();
+                            
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(routine.name, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                                        const SizedBox(height: 4),
+                                        Text('$exerciseCount exercícios · $durationMinutes min', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => RoutinePlayerScreen(routine: routine),
+                                        ),
+                                      );
+                                    },
+                                    icon: Icon(Icons.play_arrow, color: primary),
+                                    iconSize: 24,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Text(info, style: Theme.of(context).textTheme.bodySmall),
-                  ])
-                ],
+                  ),
+                );
+              },
+              loading: () => Card(
+                color: secondary.withAlpha((0.12 * 255).round()),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: const Padding(
+                  padding: EdgeInsets.all(12.0),
+                  child: CircularProgressIndicator(),
+                ),
               ),
+              error: (err, stack) => Card(
+                color: secondary.withAlpha((0.12 * 255).round()),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Text('Erro ao carregar rotinas completadas'),
+                ),
+              ),
+            );
+          },
+          loading: () => Card(
+            color: secondary.withAlpha((0.12 * 255).round()),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: const Padding(
+              padding: EdgeInsets.all(12.0),
+              child: CircularProgressIndicator(),
             ),
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.play_arrow, color: primary),
-            )
-          ],
+          ),
+          error: (err, stack) => Card(
+            color: secondary.withAlpha((0.12 * 255).round()),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Text('Erro ao carregar rotinas'),
+            ),
+          ),
+        );
+      },
+      loading: () => const Card(
+        child: Padding(
+          padding: EdgeInsets.all(12.0),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (err, stack) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Text('Erro ao carregar agenda: $err'),
         ),
       ),
     );
@@ -165,103 +255,193 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
 
   Widget _buildCalendar(BuildContext context) {
     final headerStyle = Theme.of(context).textTheme.titleMedium;
-    final localeTag = _localeTag(context);
-    final monthYear = DateFormat.yMMMM(localeTag).format(_viewMonth);
-    final weekdayLabels = _weekdayLabels(context);
+    final monthYear = DateFormat.yMMMM('pt_BR').format(_viewMonth);
     final days = _generateMonthGrid(_viewMonth);
+    
+    // Watch completadas rotinas e schedule
+    final completedRoutinesAsync = ref.watch(completedRoutinesProvider);
+    final scheduleAsync = ref.watch(scheduleProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Header
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return completedRoutinesAsync.when(
+      data: (completedMap) => scheduleAsync.when(
+        data: (schedule) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
-            Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
-            IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // Weekday labels
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: weekdayLabels
-              .map((e) => Expanded(child: Center(child: Text(e, style: const TextStyle(fontWeight: FontWeight.w600)))))
-              .toList(),
-        ),
-        const SizedBox(height: 8),
-        // Grid
-        SizedBox(
-          height: 320,
-          child: GridView.count(
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 7,
-            childAspectRatio: 1.1,
-            children: days.map((d) {
-              if (d == null) return const SizedBox.shrink();
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
+                Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
+                IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Weekday labels
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((e) => Expanded(child: Center(child: Text(e, style: TextStyle(fontWeight: FontWeight.w600))))).toList(),
+            ),
+            const SizedBox(height: 8),
+            // Grid
+            SizedBox(
+              height: 320,
+              child: GridView.count(
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 7,
+                childAspectRatio: 1.1,
+                children: days.map((d) {
+                  if (d == null) return const SizedBox.shrink();
 
-              final isToday = _isToday(d);
-              final isSelected = _selectedDate != null && d.year == _selectedDate!.year && d.month == _selectedDate!.month && d.day == _selectedDate!.day;
-              final hasWorkout = _hasWorkouts(d);
+                  final isToday = _isToday(d);
+                  final isSelected = _selectedDate != null && d.year == _selectedDate!.year && d.month == _selectedDate!.month && d.day == _selectedDate!.day;
+                  
+                  // Verificar se alguma rotina configurada para este dia foi completada
+                  final routineIdsForDay = schedule.getRoutineIdsForDay(d.weekday);
+                  final dateString = DateTime(d.year, d.month, d.day).toIso8601String();
+                  
+                  // Há alguma rotina completada neste dia?
+                  final hasCompletedRoutine = routineIdsForDay.isNotEmpty &&
+                      routineIdsForDay.any((id) => completedMap[id]?.contains(dateString) ?? false);
+                  
+                  // Há rotina agendada mas não completada
+                  final hasScheduledRoutine = routineIdsForDay.isNotEmpty && !hasCompletedRoutine;
 
-              Color bg = Colors.white;
-              Color textColor = Colors.black;
+                Color bg = Colors.white;
+                Color textColor = Colors.black;
 
-              if (isToday) {
-                bg = Theme.of(context).colorScheme.primary;
-                textColor = Colors.white;
-              } else if (isSelected) {
-                bg = Theme.of(context).colorScheme.primary.withAlpha((0.16 * 255).round());
-              }
+                if (isToday) {
+                  bg = Theme.of(context).colorScheme.primary;
+                  textColor = Colors.white;
+                } else if (isSelected) {
+                  bg = Theme.of(context).colorScheme.primary.withAlpha((0.16 * 255).round());
+                }
 
-              return GestureDetector(
-                onTap: () => setState(() => _selectedDate = d),
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: Container(
-                    margin: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: bg,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.topCenter,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text('${d.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
-                          ),
-                        ),
-                        if (hasWorkout)
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedDate = d),
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: Container(
+                      margin: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Stack(
+                        children: [
                           Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, shape: BoxShape.circle),
+                            alignment: Alignment.topCenter,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text('${d.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
                             ),
                           ),
-                      ],
+                          // Indicador visual de rotina completada (verde)
+                          if (hasCompletedRoutine)
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: Colors.green,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            )
+                          // Indicador visual de treino programado (não completado)
+                          else if (hasScheduledRoutine)
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, shape: BoxShape.circle),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
+        ],
+      ),
+        loading: () => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
+                Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
+                IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Center(child: CircularProgressIndicator()),
+          ],
         ),
-      ],
+        error: (err, stack) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
+                Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
+                IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Center(child: Text('Erro ao carregar agenda')),
+          ],
+        ),
+      ),
+      loading: () => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
+              Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
+              IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Center(child: CircularProgressIndicator()),
+        ],
+      ),
+      error: (err, stack) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
+              Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
+              IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Center(child: Text('Erro ao carregar calendário')),
+        ],
+      ),
     );
   }
 
   Widget _buildDayPanel(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     if (_selectedDate == null) return const SizedBox.shrink();
 
-    final list = _workoutsFor(_selectedDate!);
-    final dateLabel = DateFormat('d MMMM', _localeTag(context)).format(_selectedDate!);
+    final completedRoutinesAsync = ref.watch(completedRoutinesProvider);
+    final routinesAsync = ref.watch(userRoutinesProvider);
+    final dateLabel = DateFormat('d MMMM', 'pt_BR').format(_selectedDate!);
+    final dateString = DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day).toIso8601String();
 
     return Card(
       color: Theme.of(context).colorScheme.primary.withAlpha((0.06 * 255).round()),
@@ -285,37 +465,55 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
               ],
             ),
             const SizedBox(height: 8),
-            if (list.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Text(l10n.noWorkoutThisDay, style: Theme.of(context).textTheme.bodyMedium),
-              )
-            else
-              Column(
-                children: list.map((w) => _buildWorkoutCard(context, w)).toList(),
-              )
+            completedRoutinesAsync.when(
+              data: (completedMap) {
+                // Buscar rotinas que foram completadas nesta data
+                final completedRoutineIds = completedMap.entries
+                    .where((entry) => entry.value.contains(dateString))
+                    .map((entry) => entry.key)
+                    .toList();
+
+                if (completedRoutineIds.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Text('Nenhum treino realizado neste dia', style: Theme.of(context).textTheme.bodyMedium),
+                  );
+                }
+
+                // Buscar detalhes das rotinas completadas
+                return routinesAsync.when(
+                  data: (routines) {
+                    final completedRoutines = routines
+                        .where((r) => completedRoutineIds.contains(r.id))
+                        .toList();
+
+                    return Column(
+                      children: completedRoutines.map((routine) {
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            leading: const Icon(Icons.check_circle, color: Colors.green),
+                            title: Text(routine.name),
+                            subtitle: Text('${routine.exercises.length} exercícios · ${(routine.totalDuration / 60).round()} min'),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, _) => const Text('Erro ao carregar detalhes'),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => const Text('Erro ao carregar'),
+            )
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWorkoutCard(BuildContext context, Workout w) {
-    final l10n = AppLocalizations.of(context)!;
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        leading: CircleAvatar(backgroundColor: w.color, child: const Icon(Icons.fitness_center, color: Colors.white)),
-        title: Text(w.title, style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text('${w.time} · ${w.exercises} ${l10n.exercisesCount2} · ${w.minutes} ${l10n.min}'),
-        trailing: IconButton(onPressed: () {}, icon: const Icon(Icons.chevron_right)),
-      ),
-    );
-  }
-
   Widget _buildFooterCard(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Card(
       color: Theme.of(context).colorScheme.secondary,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -326,9 +524,16 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(8)),
           child: Icon(Icons.settings, color: Theme.of(context).colorScheme.inverseSurface),
         ),
-        title: Text(l10n.setupAgenda, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-        subtitle: Text(l10n.organizeWeekWorkouts, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-        onTap: () {},
+        title: Text('Configurar Agenda', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        subtitle: Text('Organize seus treinos da semana', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ConfigureScheduleScreen(),
+            ),
+          );
+        },
       ),
     );
   }
@@ -343,7 +548,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildTopCard(context),
+              _buildTopCard(context, ref),
               const SizedBox(height: 12),
               _buildCalendar(context),
               const SizedBox(height: 12),

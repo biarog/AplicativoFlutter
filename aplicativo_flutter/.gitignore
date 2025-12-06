@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+**/flutter/ephemeral/
+**/.plugin_symlinks/
+widgetbook/**/flutter/ephemeral/
+widgetbook/**/.plugin_symlinks/

@@ -193,6 +193,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Wrap(
                     spacing: 8,
+                    alignment: WrapAlignment.center,
                     children: [
                       const Locale('en'),
                       const Locale('pt'),
@@ -220,14 +221,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.sort),
-                  title: Text(AppLocalizations.of(context)!.sortRoutines),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.sortNotImplemented)));
-                  },
-                ),
                 ListTile(
                   leading: const Icon(Icons.delete_forever),
                   title: Text(AppLocalizations.of(context)!.deleteAllRoutines),
@@ -266,14 +259,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     } catch (e) {
                       messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));
                     }
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.filter_list),
-                  title: Text(AppLocalizations.of(context)!.filter),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.filterNotImplemented)));
                   },
                 ),
               ],

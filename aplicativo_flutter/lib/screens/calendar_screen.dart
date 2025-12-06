@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../l10n/app_localizations.dart';
 import '../widgets/calendar.dart';
 
 class CalendarScreen extends StatelessWidget {
@@ -8,7 +7,7 @@ class CalendarScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.agenda)),
+      appBar: AppBar(title: const Text('Agenda')),
       body: const CalendarWidget(),
     );
   }

@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/routine.dart';
-import '../l10n/app_localizations.dart';
 
 class CreateRoutineScreen extends ConsumerStatefulWidget {
   const CreateRoutineScreen({super.key});
@@ -72,8 +71,8 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
   void _addExercise() {
     final name = _exerciseNameController.text.trim();
     if (name.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AppLocalizations.of(context)!.exerciseNameRequired),
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Exercise name is required'),
       ));
       return;
     }
@@ -83,8 +82,8 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
     if (formType == ExerciseType.timed) {
       final seconds = int.tryParse(_secondsController.text.trim()) ?? 0;
       if (seconds <= 0) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(AppLocalizations.of(context)!.validDurationRequired),
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Please enter a valid duration in seconds'),
         ));
         return;
       }
@@ -102,8 +101,8 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
       final sets = int.tryParse(_setsController.text.trim()) ?? 0;
       final reps = int.tryParse(_repsController.text.trim()) ?? 0;
       if (sets <= 0 || reps <= 0) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(AppLocalizations.of(context)!.validSetsRepsRequired),
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Please enter valid sets and reps'),
         ));
         return;
       }
@@ -112,8 +111,8 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
       if (formUseWeight) {
         weight = double.tryParse(_weightController.text.trim());
         if (weight == null) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(AppLocalizations.of(context)!.validWeightRequired),
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Please enter a valid weight'),
           ));
           return;
         }
@@ -156,8 +155,8 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
   Future<void> _saveRoutine() async {
     final name = _routineNameController.text.trim();
     if (name.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AppLocalizations.of(context)!.routineNameRequired),
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Routine name is required'),
       ));
       return;
     }
@@ -165,8 +164,8 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
     final exercises = ref.read(exercisesProvider);
 
     if (exercises.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(AppLocalizations.of(context)!.atLeastOneExercise),
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Please add at least one exercise to the routine'),
       ));
       return;
     }
@@ -192,11 +191,11 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
           'lastUpdated': FieldValue.serverTimestamp(),
         });
         if (!mounted) return;
-          messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.routineSaved)));
+        messenger.showSnackBar(const SnackBar(content: Text('Routine saved to your account')));
         navigator.pop(routine);
       } catch (e) {
         if (!mounted) return;
-          messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToSaveRoutine(e.toString()))));
+        messenger.showSnackBar(SnackBar(content: Text('Failed to save routine: $e')));
         // Still return the routine to the caller so the UI can update locally.
         navigator.pop(routine);
       }
@@ -216,15 +215,15 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
       children: [
         TextField(
           controller: _exerciseNameController,
-            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.exerciseName),
+          decoration: const InputDecoration(labelText: 'Exercise name'),
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<ExerciseType>(
           initialValue: formType,
-            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.exerciseType),
-            items: [
-              DropdownMenuItem(value: ExerciseType.timed, child: Text(AppLocalizations.of(context)!.timed)),
-              DropdownMenuItem(value: ExerciseType.counting, child: Text(AppLocalizations.of(context)!.counting)),
+          decoration: const InputDecoration(labelText: 'Exercise type'),
+          items: const [
+            DropdownMenuItem(value: ExerciseType.timed, child: Text('Timed')),
+            DropdownMenuItem(value: ExerciseType.counting, child: Text('Counting')),
           ],
           onChanged: (ExerciseType? v) {
             if (v != null) ref.read(exerciseTypeProvider.notifier).set(v);
@@ -235,19 +234,19 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
           TextField(
             controller: _secondsController,
             keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.durationSeconds),
+            decoration: const InputDecoration(labelText: 'Duration (seconds)'),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _youtubeLinkController,
             keyboardType: TextInputType.url,
-              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.youtubeLinkOptional),
+            decoration: const InputDecoration(labelText: 'YouTube link (optional)'),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _startTimeController,
             keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.startTimeOptional),
+            decoration: const InputDecoration(labelText: 'Start time (seconds, optional)'),
           ),
           const SizedBox(height: 8),
         ] else ...[
@@ -257,7 +256,7 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                 child: TextField(
                   controller: _setsController,
                   keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: AppLocalizations.of(context)!.sets),
+                  decoration: const InputDecoration(labelText: 'Sets'),
                 ),
               ),
               const SizedBox(width: 8),
@@ -265,7 +264,7 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                 child: TextField(
                   controller: _repsController,
                   keyboardType: TextInputType.number,
-                     decoration: InputDecoration(labelText: AppLocalizations.of(context)!.repsLabel),
+                  decoration: const InputDecoration(labelText: 'Reps'),
                 ),
               ),
             ],
@@ -277,13 +276,13 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                 value: ref.watch(useWeightProvider),
                 onChanged: (v) => ref.read(useWeightProvider.notifier).set(v ?? false),
               ),
-                Text(AppLocalizations.of(context)!.useWeight),
+              const Text('Use weight'),
               const SizedBox(width: 12),
               Expanded(
                 child: TextField(
                   controller: _weightController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(labelText: AppLocalizations.of(context)!.weightKg),
+                  decoration: const InputDecoration(labelText: 'Weight (kg)'),
                   enabled: formUseWeight,
                 ),
               ),
@@ -293,13 +292,13 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
           TextField(
             controller: _youtubeLinkController,
             keyboardType: TextInputType.url,
-              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.youtubeLinkOptional),
+            decoration: const InputDecoration(labelText: 'YouTube link (optional)'),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _startTimeController,
             keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.startTimeOptional),
+            decoration: const InputDecoration(labelText: 'Start time (seconds, optional)'),
           ),
           const SizedBox(height: 8),
         ],
@@ -309,7 +308,7 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
             ElevatedButton.icon(
               onPressed: _addExercise,
               icon: const Icon(Icons.add),
-                label: Text(AppLocalizations.of(context)!.addExercise),
+              label: const Text('Add Exercise'),
             ),
             const SizedBox(width: 12),
             OutlinedButton(
@@ -324,7 +323,7 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                 ref.read(exerciseTypeProvider.notifier).set(ExerciseType.timed);
                 ref.read(useWeightProvider.notifier).set(false);
               },
-                child: Text(AppLocalizations.of(context)!.clear),
+              child: const Text('Clear'),
             ),
           ],
         ),
@@ -337,7 +336,7 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
     final exercises = ref.watch(exercisesProvider);
     return Scaffold(
       appBar: AppBar(
-          title: Text(AppLocalizations.of(context)!.createRoutine),
+        title: const Text('Create Routine'),
         actions: [
           TextButton(
             onPressed: _saveRoutine,
@@ -345,7 +344,7 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
               foregroundColor: Theme.of(context).colorScheme.onPrimary,
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
-              child: Text(AppLocalizations.of(context)!.save),
+            child: const Text('Save'),
           )
         ],
       ),
@@ -355,7 +354,7 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
           children: [
             TextField(
               controller: _routineNameController,
-                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.routineName),
+              decoration: const InputDecoration(labelText: 'Routine Name'),
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -363,16 +362,16 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                      Text(AppLocalizations.of(context)!.newExercise, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    const Text('New exercise', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     _buildExerciseForm(),
                     const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 8),
-                    Text(AppLocalizations.of(context)!.exercises, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    const Text('Exercises', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     if (exercises.isEmpty)
-                      Text(AppLocalizations.of(context)!.noExercisesAdded)
+                      const Text('No exercises added yet')
                     else
                       ListView.separated(
                         shrinkWrap: true,

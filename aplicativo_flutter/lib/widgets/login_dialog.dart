@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/auth_dto.dart';
 import '../providers/auth_provider.dart';
-import '../l10n/app_localizations.dart';
 
 // Deprecated: `LoginResult` removed — dialog now returns `AuthDto` (non-sensitive user info).
 
@@ -118,22 +117,22 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
       setState(() {
         switch (e.code) {
           case 'user-not-found':
-              _errorMessage = AppLocalizations.of(context)!.userNotFound;
+            _errorMessage = 'No user found with this email.';
             break;
           case 'wrong-password':
-              _errorMessage = AppLocalizations.of(context)!.wrongPassword;
+            _errorMessage = 'Incorrect password.';
             break;
           case 'email-already-in-use':
-              _errorMessage = AppLocalizations.of(context)!.emailAlreadyInUse;
+            _errorMessage = 'An account already exists with this email.';
             break;
           case 'weak-password':
-              _errorMessage = AppLocalizations.of(context)!.weakPassword;
+            _errorMessage = 'Password is too weak. Use at least 6 characters.';
             break;
           case 'invalid-email':
-              _errorMessage = AppLocalizations.of(context)!.invalidEmail;
+            _errorMessage = 'Invalid email address.';
             break;
           default:
-              _errorMessage = e.message ?? AppLocalizations.of(context)!.authenticationFailed;
+            _errorMessage = e.message ?? 'Authentication failed.';
         }
       });
       return null;
@@ -166,12 +165,12 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
       return auth;
     } on FirebaseAuthException catch (e) {
       setState(() {
-          _errorMessage = e.message ?? AppLocalizations.of(context)!.googleSignInFailed;
+        _errorMessage = e.message ?? 'Google sign-in failed.';
       });
       return null;
     } catch (e, st) {
       setState(() {
-          _errorMessage = AppLocalizations.of(context)!.googleSignInError;
+        _errorMessage = 'Google sign-in error. Please try again.';
       });
       debugPrint('Google sign-in error: $e\n$st');
       return null;
@@ -189,7 +188,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      setState(() => _errorMessage = AppLocalizations.of(context)!.pleaseEnterValidEmailForReset);
+      setState(() => _errorMessage = 'Please enter a valid email address.');
       return;
     }
 
@@ -207,7 +206,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
       if (!mounted) return;
       setState(() => _isSigningIn = false);
       messenger.showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.passwordResetSent(email))),
+        SnackBar(content: Text('Password reset email sent to $email')),
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -227,7 +226,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
     final double computedMaxWidth = widget.maxWidth ?? 600;
 
     return AlertDialog(
-      title: Text(AppLocalizations.of(context)!.login),
+      title: const Text('Login'),
       // Wrap content with constraints so caller can control dialog size.
       content: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: computedMaxWidth),
@@ -246,16 +245,16 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
             focusNode: _emailFocusNode,
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context)!.email,
-                hintText: AppLocalizations.of(context)!.emailHint,
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              hintText: 'you@example.com',
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                 return AppLocalizations.of(context)!.pleaseEnterEmail;
+                return 'Please enter your email';
               }
               if (!value.contains('@')) {
-                 return AppLocalizations.of(context)!.pleaseEnterValidEmail;
+                return 'Please enter a valid email';
               }
               return null;
             },
@@ -265,16 +264,16 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
             key: _passwordFieldKey,
             focusNode: _passwordFocusNode,
             controller: _passwordController,
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context)!.password,
+            decoration: const InputDecoration(
+              labelText: 'Password',
             ),
             obscureText: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                 return AppLocalizations.of(context)!.pleaseEnterPassword;
+                return 'Please enter your password';
               }
               if (value.length < 6) {
-                 return AppLocalizations.of(context)!.passwordMinLength;
+                return 'Password must be at least 6 characters';
               }
               return null;
             },
@@ -283,7 +282,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
           TextButton(
             onPressed: _isSigningIn ? null : _resetPassword,
               child: Text(
-                 AppLocalizations.of(context)!.forgotPassword,
+                'Forgot password?',
                 style: TextStyle(
                   color: forgotPasswordColor,
                   fontWeight: FontWeight.bold,
@@ -328,7 +327,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
               width: 20,
             ),
             label: Text(
-              AppLocalizations.of(context)!.continueWithGoogle, 
+              'Continue with Google', 
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             style: OutlinedButton.styleFrom(
@@ -350,7 +349,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
           children: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-                child: Text(AppLocalizations.of(context)!.cancel),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: _isSigningIn
@@ -379,7 +378,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
                             Theme.of(context).colorScheme.onPrimary),
                       ),
                     )
-                    : Text(AppLocalizations.of(context)!.login),
+                  : const Text('Login'),
             ),
           ],
         )

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
-import '../l10n/app_localizations.dart';
 
 /// Dialog to edit account settings such as display name and (placeholder)
 /// change-password action.
@@ -61,7 +60,7 @@ class _AccountSettingsDialogState extends ConsumerState<AccountSettingsDialog> {
       } catch (_) {}
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.nameUpdated)));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Name updated')));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -79,10 +78,10 @@ class _AccountSettingsDialogState extends ConsumerState<AccountSettingsDialog> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.changePassword),
-        content: Text(AppLocalizations.of(context)!.changePasswordNotImplemented),
+        title: const Text('Change password'),
+        content: const Text('Password change dialog not implemented yet.'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(AppLocalizations.of(context)!.ok)),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK')),
         ],
       ),
     );
@@ -96,7 +95,7 @@ class _AccountSettingsDialogState extends ConsumerState<AccountSettingsDialog> {
     final double computedMaxWidth = widget.maxWidth ?? 600;
 
     return AlertDialog(
-      title: Text(AppLocalizations.of(context)!.accountSettings),
+      title: const Text('Account settings'),
       content: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: computedMaxWidth),
         child: SizedBox(
@@ -108,9 +107,9 @@ class _AccountSettingsDialogState extends ConsumerState<AccountSettingsDialog> {
               children: [
                 TextFormField(
                   controller: _nameController,
-                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.displayName),
+                  decoration: const InputDecoration(labelText: 'Display name'),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return AppLocalizations.of(context)!.pleaseEnterDisplayName;
+                    if (v == null || v.trim().isEmpty) return 'Please enter a display name';
                     return null;
                   },
                 ),
@@ -119,7 +118,7 @@ class _AccountSettingsDialogState extends ConsumerState<AccountSettingsDialog> {
                   alignment: Alignment.centerLeft,
                   child: TextButton(
                     onPressed: _openChangePassword,
-                    child: Text(AppLocalizations.of(context)!.changePassword),
+                    child: const Text('Change password'),
                   ),
                 ),
                 if (_error != null) ...[
@@ -137,11 +136,11 @@ class _AccountSettingsDialogState extends ConsumerState<AccountSettingsDialog> {
           children: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(AppLocalizations.of(context)!.cancel),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: _isSaving ? null : _save,
-              child: _isSaving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : Text(AppLocalizations.of(context)!.save),
+              child: _isSaving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save'),
             ),
           ],
         )

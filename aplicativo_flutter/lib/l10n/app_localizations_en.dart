@@ -6,7 +6,6 @@ import 'app_localizations.dart';
 
 /// The translations for English (`en`).
 class AppLocalizationsEn extends AppLocalizations {
-  
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
@@ -43,15 +42,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteAllRoutines => 'Delete all routines';
 
   @override
-  String get removeAllRoutinesDesc =>
-      'Remove all saved routines from device and cloud';
+  String get removeAllRoutinesDesc => 'Remove all saved routines from device and cloud';
 
   @override
   String get notSignedIn => 'Not signed in';
 
   @override
-  String get deleteAllRoutinesConfirm =>
-      'Are you sure you want to delete all saved routines? This cannot be undone.';
+  String get deleteAllRoutinesConfirm => 'Are you sure you want to delete all saved routines? This cannot be undone.';
 
   @override
   String get cancel => 'Cancel';
@@ -74,8 +71,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterNotImplemented => 'Filter not implemented';
 
   @override
-  String get noRoutinesYet =>
-      'No routines yet. Tap Create to add your first routine.';
+  String get noRoutinesYet => 'No routines yet. Tap Create to add your first routine.';
 
   @override
   String exercisesCount(int count) {
@@ -198,8 +194,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changePassword => 'Change password';
 
   @override
-  String get changePasswordNotImplemented =>
-      'Password change dialog not implemented yet.';
+  String get changePasswordNotImplemented => 'Password change dialog not implemented yet.';
 
   @override
   String get ok => 'OK';
@@ -217,8 +212,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exerciseNameRequired => 'Exercise name is required';
 
   @override
-  String get validDurationRequired =>
-      'Please enter a valid duration in seconds';
+  String get validDurationRequired => 'Please enter a valid duration in seconds';
 
   @override
   String get validSetsRepsRequired => 'Please enter valid sets and reps';
@@ -230,11 +224,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get routineNameRequired => 'Routine name is required';
 
   @override
-  String get atLeastOneExercise =>
-      'Please add at least one exercise to the routine';
+  String get atLeastOneExercise => 'Please add at least one exercise to the routine';
 
   @override
   String get routineSaved => 'Routine saved to your account';
+
+  @override
+  String get routineSavedLocally => 'Routine saved locally';
 
   @override
   String failedToSaveRoutine(String error) {
@@ -293,8 +289,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueWithGoogle => 'Continue with Google';
 
   @override
-  String get pleaseEnterValidEmailForReset =>
-      'Please enter a valid email address.';
+  String get pleaseEnterValidEmailForReset => 'Please enter a valid email address.';
 
   @override
   String get userNotFound => 'No user found with this email.';

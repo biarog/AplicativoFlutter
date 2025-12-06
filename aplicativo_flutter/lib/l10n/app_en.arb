@@ -158,6 +158,7 @@
   "routineNameRequired": "Routine name is required",
   "atLeastOneExercise": "Please add at least one exercise to the routine",
   "routineSaved": "Routine saved to your account",
+  "routineSavedLocally": "Routine saved locally",
   "failedToSaveRoutine": "Failed to save routine: {error}",
   "@failedToSaveRoutine": {
     "placeholders": {

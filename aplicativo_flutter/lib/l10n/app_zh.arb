@@ -78,6 +78,7 @@
   "routineNameRequired": "计划名称为必填项",
   "atLeastOneExercise": "请至少添加一个练习到计划中",
   "routineSaved": "计划已保存到您的账户",
+  "routineSavedLocally": "计划已本地保存",
   "failedToSaveRoutine": "保存计划失败：{error}",
   "timed": "计时",
   "counting": "计数",

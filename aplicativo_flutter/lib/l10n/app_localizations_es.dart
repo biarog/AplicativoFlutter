@@ -224,7 +224,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get routineNameRequired => 'El nombre de la rutina es obligatorio';
 
   @override
-  String get atLeastOneExercise => 'Por favor, agrega al menos un ejercicio a la rutina';
+  String get atLeastOneExercise => 'Por favor, añade al menos un ejercicio a la rutina';
 
   @override
   String get routineSaved => 'Rutina guardada en tu cuenta';

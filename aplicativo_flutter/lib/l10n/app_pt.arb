@@ -78,6 +78,7 @@
   "routineNameRequired": "Nome da rotina é obrigatório",
   "atLeastOneExercise": "Por favor, adicione pelo menos um exercício à rotina",
   "routineSaved": "Rotina salva na sua conta",
+  "routineSavedLocally": "Rotina salva localmente",
   "failedToSaveRoutine": "Falha ao salvar rotina: {error}",
   "timed": "Cronometrado",
   "counting": "Contagem",

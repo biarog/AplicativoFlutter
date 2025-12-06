@@ -180,7 +180,6 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
     // Capture UI handles before any async gaps so we don't use
     // BuildContext after awaiting (fixes analyzer lint).
     final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
 
     // If a user is logged in, upload the routine as a structured map
     // into the user's `routines` array field.
@@ -192,19 +191,19 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
           'lastUpdated': FieldValue.serverTimestamp(),
         });
         if (!mounted) return;
-          messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.routineSaved)));
-        navigator.pop(routine);
+        messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.routineSaved)));
+        // Clear the form after successful save
+        _routineNameController.clear();
+        ref.read(exercisesProvider.notifier).setList([]);
       } catch (e) {
         if (!mounted) return;
-          messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToSaveRoutine(e.toString()))));
-        // Still return the routine to the caller so the UI can update locally.
-        navigator.pop(routine);
+        messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToSaveRoutine(e.toString()))));
       }
       return;
     }
 
-    // No signed-in user: just return the routine (local/in-memory save).
-    navigator.pop(routine);
+    // No signed-in user: show message that they need to sign in to save
+    messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.notSignedIn)));
   }
 
   Widget _buildExerciseForm() {
@@ -335,82 +334,82 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
   @override
   Widget build(BuildContext context) {
     final exercises = ref.watch(exercisesProvider);
-    return Scaffold(
-      appBar: AppBar(
-          title: Text(AppLocalizations.of(context)!.createRoutine),
-        actions: [
-          TextButton(
-            onPressed: _saveRoutine,
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-            ),
-              child: Text(AppLocalizations.of(context)!.save),
-          )
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _routineNameController,
-                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.routineName),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                      Text(AppLocalizations.of(context)!.newExercise, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    _buildExerciseForm(),
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 8),
-                    Text(AppLocalizations.of(context)!.exercises, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    if (exercises.isEmpty)
-                      Text(AppLocalizations.of(context)!.noExercisesAdded)
-                    else
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: exercises.length,
-                          separatorBuilder: (context, index) => const Divider(),
-                        itemBuilder: (context, index) {
-                          final e = exercises[index];
-                          String subtitle;
-                          if (e is TimedExercise) {
-                            subtitle = 'Timed — ${e.seconds}s';
-                          } else {
-                            final ce = e as CountingExercise;
-                            subtitle = ce.weight != null
-                                ? 'Counting — ${ce.sets}x${ce.reps} @ ${ce.weight}kg'
-                                : 'Counting — ${ce.sets}x${ce.reps}';
-                          }
-
-                          if (e.youtubeUrl != null && e.youtubeUrl!.isNotEmpty) {
-                            subtitle = "$subtitle • Video: ${e.youtubeUrl}${e.youtubeStartSeconds != null ? ' @ ${e.youtubeStartSeconds}s' : ''}";
-                          }
-
-                          return ListTile(
-                            title: Text(e.name),
-                            subtitle: Text(subtitle),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () => _removeExercise(index),
-                            ),
-                          );
-                        },
-                      ),
-                  ],
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _routineNameController,
+                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.routineName),
                 ),
               ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _saveRoutine,
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                ),
+                child: Text(AppLocalizations.of(context)!.save),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(AppLocalizations.of(context)!.newExercise, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  _buildExerciseForm(),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Text(AppLocalizations.of(context)!.exercises, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  if (exercises.isEmpty)
+                    Text(AppLocalizations.of(context)!.noExercisesAdded)
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: exercises.length,
+                      separatorBuilder: (context, index) => const Divider(),
+                      itemBuilder: (context, index) {
+                        final e = exercises[index];
+                        String subtitle;
+                        if (e is TimedExercise) {
+                          subtitle = 'Timed — ${e.seconds}s';
+                        } else {
+                          final ce = e as CountingExercise;
+                          subtitle = ce.weight != null
+                              ? 'Counting — ${ce.sets}x${ce.reps} @ ${ce.weight}kg'
+                              : 'Counting — ${ce.sets}x${ce.reps}';
+                        }
+
+                        if (e.youtubeUrl != null && e.youtubeUrl!.isNotEmpty) {
+                          subtitle = "$subtitle • Video: ${e.youtubeUrl}${e.youtubeStartSeconds != null ? ' @ ${e.youtubeStartSeconds}s' : ''}";
+                        }
+
+                        return ListTile(
+                          title: Text(e.name),
+                          subtitle: Text(subtitle),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () => _removeExercise(index),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

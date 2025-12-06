@@ -419,8 +419,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final authState = ref.watch(authStateChangesProvider);
     final isLoggedIn = authState.maybeWhen(data: (u) => u != null, orElse: () => false);
     // Build pages on each build so we can use context in children
-    // The Create tab launches a modal to create a routine and returns it.
-    final pages = <Widget>[_buildRoutinesPage(), const CalendarScreen(), const SizedBox.shrink()];
+    final pages = <Widget>[_buildRoutinesPage(), const CalendarScreen(), const CreateRoutineScreen()];
 
     return Scaffold(
       appBar: AppBar(
@@ -627,21 +626,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          onTap: (i) async {
-            if (i == 2) {
-              // Open create routine screen and await a created Routine
-              final result = await Navigator.of(context).push<Routine>(
-                MaterialPageRoute(builder: (_) => const CreateRoutineScreen()),
-              );
-              if (result != null) {
-                setState(() {
-                  _routines.add(result);
-                  _selectedIndex = 0; // show routines after creating
-                });
-              }
-            } else {
-              setState(() => _selectedIndex = i);
-            }
+          onTap: (i) {
+            setState(() => _selectedIndex = i);
           },
           selectedItemColor: Theme.of(context).colorScheme.primary,
           unselectedItemColor: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.6),

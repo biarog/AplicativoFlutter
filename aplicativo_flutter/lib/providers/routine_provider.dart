@@ -6,8 +6,14 @@ import 'local_routines_provider.dart';
 
 /// Provider que retorna todas as rotinas (locais + do Firebase)
 final userRoutinesProvider = FutureProvider<List<Routine>>((ref) async {
-  // Sempre incluir rotinas locais
-  final localRoutines = ref.watch(localRoutinesProvider);
+  // Aguardar rotinas locais
+  final localRoutinesAsync = ref.watch(localRoutinesProvider);
+  final localRoutines = localRoutinesAsync.when(
+    data: (routines) => routines,
+    loading: () => <Routine>[],
+    error: (_, __) => <Routine>[],
+  );
+  
   debugPrint('Rotinas locais: ${localRoutines.length}');
   for (var routine in localRoutines) {
     debugPrint('  - ${routine.name} (id: ${routine.id})');

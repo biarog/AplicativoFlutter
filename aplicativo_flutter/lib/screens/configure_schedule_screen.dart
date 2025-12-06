@@ -27,7 +27,7 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
       body: routinesAsync.when(
         data: (routines) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16.0).copyWith(bottom: 80.0),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 600),
@@ -99,6 +99,20 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
 
   Widget _buildDaySelector(BuildContext context, List<Routine> routines, String dayName, int dayIndex, WeeklySchedule schedule) {
     final selectedRoutineId = schedule.routineIdsByDay[dayIndex];
+    
+    // Validar se a rotina selecionada ainda existe
+    final isValidSelection = selectedRoutineId == null || 
+        routines.any((r) => r.id == selectedRoutineId);
+    
+    // Se a rotina não existe mais, limpar a seleção
+    final validSelectedId = isValidSelection ? selectedRoutineId : null;
+    
+    // Se detectamos uma rotina inválida, limpar do schedule
+    if (!isValidSelection) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(scheduleProvider.notifier).setRoutineForDay(dayIndex, null);
+      });
+    }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -119,7 +133,7 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
                 borderRadius: BorderRadius.circular(4),
               ),
               child: DropdownButton<String?>(
-                value: selectedRoutineId,
+                value: validSelectedId,
                 isExpanded: true,
                 underline: const SizedBox(), // Remove default underline
                 hint: const Text('Selecione uma rotina'),

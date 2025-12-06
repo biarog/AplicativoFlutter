@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/routine.dart';
+import '../providers/completed_routines_provider.dart';
 import '../widgets/youtube_player.dart';
 
 class RoutinePlayerScreen extends ConsumerStatefulWidget {
@@ -166,19 +166,18 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
 
   Future<void> _completeRoutine() async {
     _pause();
-    final prefs = await SharedPreferences.getInstance();
-    final key = 'completed_dates_${widget.routine.id}';
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day).toIso8601String();
-    final list = prefs.getStringList(key) ?? <String>[];
-    if (!list.contains(today)) {
-      list.add(today);
-      await prefs.setStringList(key, list);
-    }
+    
+    // Marcar rotina como completada usando o novo provider
+    await ref.read(completedRoutinesProvider.notifier).markRoutineAsCompleted(
+      widget.routine.id,
+      DateTime.now(),
+    );
+
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Routine "${widget.routine.name}" completed and marked on calendar.'),
+      content: Text('Rotina "${widget.routine.name}" concluída e registrada no calendário!'),
     ));
+    
     // Reset to start
     setState(() {
       _currentIndex = 0;

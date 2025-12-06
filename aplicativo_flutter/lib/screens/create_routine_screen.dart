@@ -177,8 +177,8 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
       exercises: List.of(exercises),
     );
 
-    // Sempre salvar localmente
-    ref.read(localRoutinesProvider.notifier).addRoutine(routine);
+    // Sempre salvar localmente e aguardar persistência
+    await ref.read(localRoutinesProvider.notifier).addRoutine(routine);
 
     // Capture UI handles before any async gaps so we don't use
     // BuildContext after awaiting (fixes analyzer lint).

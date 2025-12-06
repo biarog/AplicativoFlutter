@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'login_firebase/firebase_options.dart';
@@ -20,6 +19,8 @@ import 'widgets/create_account_dialog.dart';
 import 'widgets/account_settings_dialog.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/routine_provider.dart';
+import 'providers/local_routines_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -93,11 +94,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
-  // In-memory list of user-created routines. Replace with persistent
-  // storage (database / Firestore) as needed.
-  final List<Routine> _routines = [];
 
   Widget _buildRoutinesPage() {
+    final routinesAsync = ref.watch(userRoutinesProvider);
+    
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -221,9 +221,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   if (confirm != true) return;
 
                                   try {
+                                    // Deletar do Firebase se logado
                                     await localRef.read(authRepositoryProvider).clearRoutinesForUser(user.uid);
+                                    // Deletar do storage local
+                                    final routines = await localRef.read(localRoutinesProvider.future);
+                                    for (final routine in routines) {
+                                      await localRef.read(localRoutinesProvider.notifier).removeRoutine(routine.id);
+                                    }
                                     if (!mounted) return;
-                                    setState(() => _routines.clear());
                                     messenger.showSnackBar(const SnackBar(content: Text('All routines deleted')));
                                   } catch (e) {
                                     messenger.showSnackBar(SnackBar(content: Text('Failed to delete routines: $e')));
@@ -252,16 +257,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          if (_routines.isEmpty) ...[
-            const Text('No routines yet. Tap Create to add your first routine.'),
-          ] else ...[
-            Expanded(
-              child: ListView.separated(
-                itemCount: _routines.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final routine = _routines[index];
-                  return Card(
+          Expanded(
+            child: routinesAsync.when(
+              data: (routines) {
+                if (routines.isEmpty) {
+                  return const Center(
+                    child: Text('No routines yet. Tap Create to add your first routine.'),
+                  );
+                }
+                return ListView.separated(
+                  itemCount: routines.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final routine = routines[index];
+                    return Card(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                       side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 1.0),
@@ -304,13 +313,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               if (confirm != true) return;
 
                               try {
-                                // If signed in, attempt to remove from Firestore; otherwise remove locally
+                                // Remover do provider local (que também remove do storage)
+                                await ref.read(localRoutinesProvider.notifier).removeRoutine(routine.id);
+                                // Se logado, remover do Firebase também
                                 final user = ref.read(authStateChangesProvider).maybeWhen(data: (u) => u, orElse: () => null);
                                 if (user != null) {
                                   await ref.read(authRepositoryProvider).removeRoutineForUser(user.uid, routine.id);
                                 }
                                 if (!mounted) return;
-                                setState(() => _routines.removeWhere((r) => r.id == routine.id));
                                 messenger.showSnackBar(const SnackBar(content: Text('Routine deleted')));
                               } catch (e) {
                                 messenger.showSnackBar(SnackBar(content: Text('Failed to delete routine: $e')));
@@ -322,10 +332,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                   );
-                },
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(
+                child: Text('Erro ao carregar rotinas: $err'),
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -334,36 +349,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // Note: `ref.listen` must be used inside the `build` method for
   // Consumer widgets. The listener is registered in `build()` below.
 
-  Future<void> _loadRoutinesForUser(String uid) async {
-    try {
-      final list = await ref.read(authRepositoryProvider).fetchRoutinesForUserAsModels(uid);
-      if (!mounted) return;
-      setState(() {
-        _routines
-          ..clear()
-          ..addAll(list);
-      });
-    } catch (e) {
-      // ignore errors for now, but keep local list unchanged
-      debugPrint('Failed to load routines for user $uid: $e');
-    }
-  }
-
   // pages are built in build() so they can use current BuildContext
 
   @override
   Widget build(BuildContext context) {
-    // Register listener for auth state changes here (allowed in build()).
-    ref.listen<AsyncValue<User?>>(authStateChangesProvider, (previous, next) {
-      next.whenData((user) {
-        if (user == null) {
-          if (!mounted) return;
-          setState(() => _routines.clear());
-        } else {
-          _loadRoutinesForUser(user.uid);
-        }
-      });
-    });
     // Watch auth state to know whether a user is signed in.
     final authState = ref.watch(authStateChangesProvider);
     final isLoggedIn = authState.maybeWhen(data: (u) => u != null, orElse: () => false);
@@ -402,29 +391,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                             if (!mounted) return;
                             if (auth != null) {
-                              // Populate in-memory routines immediately from returned AuthDto
-                              try {
-                                setState(() {
-                                  _routines
-                                    ..clear()
-                                    ..addAll((auth.routines ?? <Map<String, dynamic>>[])
-                                        .map((m) {
-                                          try {
-                                            return Routine.fromJson(m);
-                                          } catch (_) {
-                                            return null;
-                                          }
-                                        })
-                                        .whereType<Routine>());
-                                });
-                              } catch (e) {
-                                // If conversion fails, attempt to fetch via repository
-                                try {
-                                  final uid = auth.uid;
-                                  _loadRoutinesForUser(uid);
-                                } catch (_) {}
-                              }
-
                               messenger.showSnackBar(SnackBar(
                                 content: Text('Signed in: ${auth.email ?? auth.uid}'),
                               ));
@@ -451,29 +417,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           );
                           if (!mounted) return;
                           if (auth != null) {
-                            // Populate in-memory routines from returned AuthDto for immediate feedback
-                            try {
-                              setState(() {
-                                _routines
-                                  ..clear()
-                                  ..addAll((auth.routines ?? <Map<String, dynamic>>[])
-                                      .map((m) {
-                                        try {
-                                          return Routine.fromJson(m);
-                                        } catch (_) {
-                                          return null;
-                                        }
-                                      })
-                                      .whereType<Routine>());
-                              });
-                            } catch (e) {
-                              // fallback to fetching from repository if conversion fails
-                              try {
-                                final uid = auth.uid;
-                                _loadRoutinesForUser(uid);
-                              } catch (_) {}
-                            }
-
                             messenger.showSnackBar(SnackBar(
                               content: Text('Signed in: ${auth.email ?? auth.uid}'),
                             ));
@@ -568,16 +511,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           currentIndex: _selectedIndex,
           onTap: (i) async {
             if (i == 2) {
-              // Open create routine screen and await a created Routine
-              final result = await Navigator.of(context).push<Routine>(
+              // Open create routine screen
+              await Navigator.of(context).push<Routine>(
                 MaterialPageRoute(builder: (_) => const CreateRoutineScreen()),
               );
-              if (result != null) {
-                setState(() {
-                  _routines.add(result);
-                  _selectedIndex = 0; // show routines after creating
-                });
-              }
+              // Voltar para tab de rotinas após criar
+              setState(() => _selectedIndex = 0);
             } else {
               setState(() => _selectedIndex = i);
             }

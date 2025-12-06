@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'login_firebase/firebase_options.dart';
+import 'l10n/app_localizations.dart';
 
 import 'models/routine.dart';
 import 'models/auth_dto.dart';
@@ -19,8 +20,8 @@ import 'widgets/create_account_dialog.dart';
 import 'widgets/account_settings_dialog.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
-import 'providers/routine_provider.dart';
 import 'providers/local_routines_provider.dart';
+import 'providers/locale_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,12 +83,17 @@ class MainApp extends ConsumerWidget {
     final darkTheme = ThemeData(colorScheme: darkScheme, useMaterial3: true)
         .copyWith(textTheme: GoogleFonts.rubikTextTheme(ThemeData.dark().textTheme));
     
+    final locale = ref.watch(localeProvider);
+    
     return MaterialApp(
       title: 'Fitness Routines',
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: settings.isDark ? ThemeMode.dark : ThemeMode.light,
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: const HomeScreen(),
     );
   }
@@ -102,29 +108,134 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
+  List<Routine> _routines = [];
 
   Widget _buildRoutinesPage() {
-    final routinesAsync = ref.watch(userRoutinesProvider);
-    
+    // Load routines from local provider
+    ref.listen(localRoutinesProvider, (prev, next) {
+      next.whenData((routines) {
+        if (mounted) {
+          setState(() => _routines = routines);
+        }
+      });
+    });
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Your Routines', style: Theme.of(context).textTheme.headlineMedium),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await showModalBottomSheet<void>(
-                    context: context,
-                    builder: (context) {
-                      // capture the Riverpod ref from the stateful widget scope
-                      final localRef = ref;
-                      // derive available colors from presets defined in theme_provider
-                      final presets = localRef.read(themeSettingsProvider.notifier).presets;
-                      final currentIsDark = localRef.read(themeSettingsProvider).isDark;
+              Text(AppLocalizations.of(context)!.yourRoutines, style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 4),
+              Container(
+                height: 3,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_routines.isEmpty) ...[
+            Text(AppLocalizations.of(context)!.noRoutinesYet),
+          ] else ...[
+            Expanded(
+              child: ListView.separated(
+                itemCount: _routines.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final routine = _routines[index];
+                  return Card(
+                    color: Theme.of(context).colorScheme.tertiary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 1.0),
+                    ),
+                    child: ListTile(
+                      title: Text(
+                        routine.name, 
+                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)
+                      ),
+                      subtitle: Text(
+                        '${routine.exercises.length} exercises • ~${routine.totalDuration}s',
+                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                              backgroundColor: Theme.of(context).colorScheme.secondary,
+                            ),
+                            child: Text(AppLocalizations.of(context)!.play, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),),
+                            onPressed: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => RoutinePlayerScreen(routine: routine),
+                              ));
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          // Per-routine delete button
+                          IconButton(
+                            tooltip: 'Delete routine',
+                            color: Theme.of(context).colorScheme.error,
+                            onPressed: () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Delete routine'),
+                                  content: Text('Delete "${routine.name}"? This will remove it from your device and cloud.'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete')),
+                                  ],
+                                ),
+                              );
+                              if (confirm != true) return;
+
+                              try {
+                                // Remover do provider local (que também remove do storage)
+                                await ref.read(localRoutinesProvider.notifier).removeRoutine(routine.id);
+                                // Se logado, remover do Firebase também
+                                final user = ref.read(authStateChangesProvider).maybeWhen(data: (u) => u, orElse: () => null);
+                                if (user != null) {
+                                  await ref.read(authRepositoryProvider).removeRoutineForUser(user.uid, routine.id);
+                                }
+                                if (!mounted) return;
+                                messenger.showSnackBar(const SnackBar(content: Text('Routine deleted')));
+                              } catch (e) {
+                                messenger.showSnackBar(SnackBar(content: Text('Failed to delete routine: $e')));
+                              }
+                            },
+                            icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.primary,),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showOptionsModal() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        final localRef = ref;
+        final presets = localRef.read(themeSettingsProvider.notifier).presets;
+        final currentIsDark = localRef.read(themeSettingsProvider).isDark;
 
         return SafeArea(
           child: Padding(
@@ -261,134 +372,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     );
                     if (confirm != true) return;
 
-                                  try {
-                                    // Deletar do Firebase se logado
-                                    await localRef.read(authRepositoryProvider).clearRoutinesForUser(user.uid);
-                                    // Deletar do storage local
-                                    final routines = await localRef.read(localRoutinesProvider.future);
-                                    for (final routine in routines) {
-                                      await localRef.read(localRoutinesProvider.notifier).removeRoutine(routine.id);
-                                    }
-                                    if (!mounted) return;
-                                    setState(() => _routines.clear());
-                                    messenger.showSnackBar(SnackBar(content: Text(allDeletedMsg)));
-                                  } catch (e) {
-                                    messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));
-                                  }
-                                },
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.filter_list),
-                                title: const Text('Filter'),
-                                onTap: () {
-                                  Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filter not implemented')));
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-                icon: const Icon(Icons.more_vert),
-                label: const Text('Options'),
-                style: ElevatedButton.styleFrom(elevation: 0),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (_routines.isEmpty) ...[
-            Text(AppLocalizations.of(context)!.noRoutinesYet),
-          ] else ...[
-            Expanded(
-              child: ListView.separated(
-                itemCount: _routines.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final routine = _routines[index];
-                  return Card(
-                    color: Theme.of(context).colorScheme.tertiary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 1.0),
-                    ),
-                    child: ListTile(
-                      title: Text(
-                        routine.name, 
-                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)
-                      ),
-                      subtitle: Text(
-                        '${routine.exercises.length} exercises • ~${routine.totalDuration}s',
-                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                              backgroundColor: Theme.of(context).colorScheme.secondary,
-                            ),
-                            child: Text(AppLocalizations.of(context)!.play, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),),
-                            onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => RoutinePlayerScreen(routine: routine),
-                              ));
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                          // Per-routine delete button
-                          IconButton(
-                            tooltip: 'Delete routine',
-                            color: Theme.of(context).colorScheme.error,
-                            onPressed: () async {
-                              final messenger = ScaffoldMessenger.of(context);
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('Delete routine'),
-                                  content: Text('Delete "${routine.name}"? This will remove it from your device and cloud.'),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete')),
-                                  ],
-                                ),
-                              );
-                              if (confirm != true) return;
-
-                              try {
-                                // Remover do provider local (que também remove do storage)
-                                await ref.read(localRoutinesProvider.notifier).removeRoutine(routine.id);
-                                // Se logado, remover do Firebase também
-                                final user = ref.read(authStateChangesProvider).maybeWhen(data: (u) => u, orElse: () => null);
-                                if (user != null) {
-                                  await ref.read(authRepositoryProvider).removeRoutineForUser(user.uid, routine.id);
-                                }
-                                if (!mounted) return;
-                                messenger.showSnackBar(const SnackBar(content: Text('Routine deleted')));
-                              } catch (e) {
-                                messenger.showSnackBar(SnackBar(content: Text('Failed to delete routine: $e')));
-                              }
-                            },
-                            icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.primary,),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                    try {
+                      await localRef.read(authRepositoryProvider).clearRoutinesForUser(user.uid);
+                      if (!mounted) return;
+                      setState(() => _routines.clear());
+                      messenger.showSnackBar(SnackBar(content: Text(allDeletedMsg)));
+                    } catch (e) {
+                      messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));
+                    }
                   },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(
-                child: Text('Erro ao carregar rotinas: $err'),
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -563,17 +561,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          onTap: (i) async {
-            if (i == 2) {
-              // Open create routine screen
-              await Navigator.of(context).push<Routine>(
-                MaterialPageRoute(builder: (_) => const CreateRoutineScreen()),
-              );
-              // Voltar para tab de rotinas após criar
-              setState(() => _selectedIndex = 0);
-            } else {
-              setState(() => _selectedIndex = i);
-            }
+          onTap: (i) {
+            setState(() => _selectedIndex = i);
           },
           selectedItemColor: Theme.of(context).colorScheme.primary,
           unselectedItemColor: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.6),

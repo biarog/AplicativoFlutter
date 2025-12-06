@@ -11,7 +11,7 @@ final userRoutinesProvider = FutureProvider<List<Routine>>((ref) async {
   final localRoutines = localRoutinesAsync.when(
     data: (routines) => routines,
     loading: () => <Routine>[],
-    error: (_, __) => <Routine>[],
+    error: (_, _) => <Routine>[],
   );
   
   debugPrint('Rotinas locais: ${localRoutines.length}');

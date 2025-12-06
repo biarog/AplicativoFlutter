@@ -323,9 +323,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                              backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+                              backgroundColor: Theme.of(context).colorScheme.secondary,
                             ),
-                            child: Text(AppLocalizations.of(context)!.play),
+                            child: Text(AppLocalizations.of(context)!.play, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),),
                             onPressed: () {
                               Navigator.of(context).push(MaterialPageRoute(
                                 builder: (_) => RoutinePlayerScreen(routine: routine),
@@ -601,6 +601,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             },
                             style: TextButton.styleFrom(
                               foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                              backgroundColor: Theme.of(context).colorScheme.primary,
                             ),
                             child: Text(AppLocalizations.of(context)!.logOut),
                           ),

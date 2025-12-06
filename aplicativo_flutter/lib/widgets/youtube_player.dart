@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
+import '../l10n/app_localizations.dart';
+
 class YouTubePlayerWidget extends ConsumerStatefulWidget {
 	final String url;
 	final Duration startAt;
@@ -89,8 +91,9 @@ class _YouTubePlayerWidgetState extends ConsumerState<YouTubePlayerWidget> {
 
 	@override
 	Widget build(BuildContext context) {
+		final l10n = AppLocalizations.of(context)!;
 		if (_videoId == null || _videoId!.isEmpty) {
-			return const Center(child: Text('URL do YouTube inválida'));
+			return Center(child: Text(l10n.invalidYoutubeUrl));
 		}
 
 		return YoutubePlayer(

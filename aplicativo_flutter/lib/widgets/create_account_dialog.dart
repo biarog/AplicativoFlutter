@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/auth_dto.dart';
 import '../providers/auth_provider.dart';
+import '../l10n/app_localizations.dart';
 
 /// Use with `showDialog<AuthDto?>(context: context, builder: (_) => CreateAccountDialog())`.
 class CreateAccountDialog extends ConsumerStatefulWidget {
@@ -63,7 +64,7 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
       valid = _formKey.currentState?.validate() ?? false;
     } catch (e, st) {
       debugPrint('[CreateAccountDialog] validator threw: $e\n$st');
-      setState(() => _errorMessage = 'Validation error. Please check your input.');
+        setState(() => _errorMessage = AppLocalizations.of(context)!.validationError);
       return null;
     }
 
@@ -88,7 +89,7 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
       }
 
       setState(() {
-        _errorMessage = emailErr ?? passErr ?? confirmErr ?? 'Please fix the errors above.';
+        _errorMessage = emailErr ?? passErr ?? confirmErr ?? AppLocalizations.of(context)!.pleaseFixErrors;
       });
       return null;
     }
@@ -110,22 +111,22 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
       setState(() {
         switch (e.code) {
           case 'user-not-found':
-            _errorMessage = 'No user found with this email.';
+            _errorMessage = AppLocalizations.of(context)!.userNotFound;
             break;
           case 'wrong-password':
-            _errorMessage = 'Incorrect password.';
+            _errorMessage = AppLocalizations.of(context)!.wrongPassword;
             break;
           case 'email-already-in-use':
-            _errorMessage = 'An account already exists with this email.';
+            _errorMessage = AppLocalizations.of(context)!.emailAlreadyInUse;
             break;
           case 'weak-password':
-            _errorMessage = 'Password is too weak. Use at least 6 characters.';
+            _errorMessage = AppLocalizations.of(context)!.weakPassword;
             break;
           case 'invalid-email':
-            _errorMessage = 'Invalid email address.';
+            _errorMessage = AppLocalizations.of(context)!.invalidEmail;
             break;
           default:
-            _errorMessage = e.message ?? 'Authentication failed.';
+            _errorMessage = e.message ?? AppLocalizations.of(context)!.authenticationFailed;
         }
       });
       return null;
@@ -157,13 +158,13 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
         if (e.code == 'popup-closed-by-user' || e.code == 'cancelled') {
           _errorMessage = null;
         } else {
-          _errorMessage = e.message ?? 'Google sign-in failed.';
+           _errorMessage = e.message ?? AppLocalizations.of(context)!.googleSignInFailed;
         }
       });
       return null;
     } catch (e, st) {
       setState(() {
-        _errorMessage = 'Google sign-in error. Please try again.';
+          _errorMessage = AppLocalizations.of(context)!.googleSignInError;
       });
       debugPrint('Google sign-in error: $e\n$st');
       return null;
@@ -182,7 +183,7 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
     final double computedMaxWidth = widget.maxWidth ?? 600;
 
     return AlertDialog(
-      title: const Text('Create Account'),
+      title: Text(AppLocalizations.of(context)!.createAccount),
       // Wrap content with constraints so caller can control dialog size.
       content: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: computedMaxWidth),
@@ -320,7 +321,7 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
           children: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
             ),
             ElevatedButton(
               onPressed: _isSigningIn
@@ -346,7 +347,7 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
                             Theme.of(context).colorScheme.onPrimary),
                       ),
                     )
-                  : const Text('Create Account'),
+                    : Text(AppLocalizations.of(context)!.createAccount),
             ),
           ],
         )

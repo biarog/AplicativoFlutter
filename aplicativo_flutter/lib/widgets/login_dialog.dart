@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/auth_dto.dart';
 import '../providers/auth_provider.dart';
+import '../l10n/app_localizations.dart';
 
 // Deprecated: `LoginResult` removed — dialog now returns `AuthDto` (non-sensitive user info).
 
@@ -206,7 +207,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
       if (!mounted) return;
       setState(() => _isSigningIn = false);
       messenger.showSnackBar(
-        SnackBar(content: Text('Password reset email sent to $email')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.passwordResetSent(email))),
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -226,7 +227,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
     final double computedMaxWidth = widget.maxWidth ?? 600;
 
     return AlertDialog(
-      title: const Text('Login'),
+      title: Text(AppLocalizations.of(context)!.login),
       // Wrap content with constraints so caller can control dialog size.
       content: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: computedMaxWidth),
@@ -349,7 +350,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
           children: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             ElevatedButton(
               onPressed: _isSigningIn
@@ -378,7 +379,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
                             Theme.of(context).colorScheme.onPrimary),
                       ),
                     )
-                  : const Text('Login'),
+                  : Text(AppLocalizations.of(context)!.login),
             ),
           ],
         )

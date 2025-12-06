@@ -130,7 +130,37 @@
     "invalidYoutubeUrl": "URL de YouTube inválida",
     "noWorkoutThisDay": "No se realizó entrenamiento este día",
     "exercisesCount2": "ejercicios",
-    "min": "min",
-    "setupAgenda": "Configurar Agenda",
-    "organizeWeekWorkouts": "Organiza tus entrenamientos de la semana"
-  }
+  "min": "min",
+  "setupAgenda": "Configurar Agenda",
+  "organizeWeekWorkouts": "Organiza tus entrenamientos de la semana",
+  "errorLoadingRoutines": "Error al cargar rutinas: {error}",
+  "@errorLoadingRoutines": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "account": "Cuenta",
+  "configureSchedule": "Configurar Agenda",
+  "selectRoutinesForEachDay": "Selecciona rutinas para cada día de la semana",
+  "totalScheduledRoutines": "Total de rutinas programadas: {count}",
+  "@totalScheduledRoutines": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "done": "Hecho",
+  "errorLoadingSchedule": "Error al cargar la agenda",
+  "back": "Volver",
+  "loadingRoutines": "Cargando rutinas...",
+  "monday": "Lunes",
+  "tuesday": "Martes",
+  "wednesday": "Miércoles",
+  "thursday": "Jueves",
+  "friday": "Viernes",
+  "saturday": "Sábado",
+  "sunday": "Domingo"
+}

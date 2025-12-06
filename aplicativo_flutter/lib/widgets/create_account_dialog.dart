@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/auth_dto.dart';
 import '../providers/auth_provider.dart';
+import '../l10n/app_localizations.dart';
 
 /// Use with `showDialog<AuthDto?>(context: context, builder: (_) => CreateAccountDialog())`.
 class CreateAccountDialog extends ConsumerStatefulWidget {
@@ -182,7 +183,7 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
     final double computedMaxWidth = widget.maxWidth ?? 600;
 
     return AlertDialog(
-      title: const Text('Create Account'),
+      title: Text(AppLocalizations.of(context)!.createAccount),
       // Wrap content with constraints so caller can control dialog size.
       content: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: computedMaxWidth),
@@ -320,7 +321,7 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
           children: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             ElevatedButton(
               onPressed: _isSigningIn
@@ -346,7 +347,7 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
                             Theme.of(context).colorScheme.onPrimary),
                       ),
                     )
-                  : const Text('Create Account'),
+                  : Text(AppLocalizations.of(context)!.createAccount),
             ),
           ],
         )

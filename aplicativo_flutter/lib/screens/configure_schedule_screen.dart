@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/routine.dart';
 import '../providers/schedule_provider.dart';
 import '../providers/routine_provider.dart';
+import '../l10n/app_localizations.dart';
 
 class ConfigureScheduleScreen extends ConsumerStatefulWidget {
   const ConfigureScheduleScreen({super.key});
@@ -12,7 +13,15 @@ class ConfigureScheduleScreen extends ConsumerStatefulWidget {
 }
 
 class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScreen> {
-  final List<String> weekDays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+  List<String> get weekDays => [
+    AppLocalizations.of(context)!.monday,
+    AppLocalizations.of(context)!.tuesday,
+    AppLocalizations.of(context)!.wednesday,
+    AppLocalizations.of(context)!.thursday,
+    AppLocalizations.of(context)!.friday,
+    AppLocalizations.of(context)!.saturday,
+    AppLocalizations.of(context)!.sunday,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +30,7 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configurar Agenda'),
+        title: Text(AppLocalizations.of(context)!.configureSchedule),
         elevation: 0,
       ),
       body: routinesAsync.when(
@@ -37,7 +46,7 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'Selecione rotinas para cada dia da semana',
+                          AppLocalizations.of(context)!.selectRoutinesForEachDay,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                           textAlign: TextAlign.center,
                         ),
@@ -55,14 +64,14 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            'Total de rotinas agendadas: ${schedule.routineIdsByDay.values.fold<int>(0, (sum, list) => sum + list.length)}',
+                            AppLocalizations.of(context)!.totalScheduledRoutines(schedule.routineIdsByDay.values.fold<int>(0, (sum, list) => sum + list.length)),
                             style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                           ),
                         ),
                         const SizedBox(height: 24),
                         ElevatedButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Concluído'),
+                          child: Text(AppLocalizations.of(context)!.done),
                         ),
                       ],
                     ),
@@ -79,11 +88,11 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
                 children: [
                   const Icon(Icons.error, size: 48, color: Colors.red),
                   const SizedBox(height: 16),
-                  const Text('Erro ao carregar agenda'),
+                  Text(AppLocalizations.of(context)!.errorLoadingSchedule),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Voltar'),
+                    child: Text(AppLocalizations.of(context)!.back),
                   ),
                 ],
               ),
@@ -93,10 +102,10 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
         loading: () => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Carregando rotinas...'),
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(AppLocalizations.of(context)!.loadingRoutines),
             ],
           ),
         ),
@@ -106,11 +115,11 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
             children: [
               const Icon(Icons.error, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              const Text('Erro ao carregar rotinas'),
+              Text(AppLocalizations.of(context)!.errorLoadingRoutines(err.toString())),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Voltar'),
+                child: Text(AppLocalizations.of(context)!.back),
               ),
             ],
           ),

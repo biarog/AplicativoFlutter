@@ -371,4 +371,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get organizeWeekWorkouts => 'Organize your week workouts';
+
+  @override
+  String errorLoadingRoutines(String error) {
+    return 'Error loading routines: $error';
+  }
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get configureSchedule => 'Configure Schedule';
+
+  @override
+  String get selectRoutinesForEachDay => 'Select routines for each day of the week';
+
+  @override
+  String totalScheduledRoutines(int count) {
+    return 'Total scheduled routines: $count';
+  }
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get errorLoadingSchedule => 'Error loading schedule';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get loadingRoutines => 'Loading routines...';
+
+  @override
+  String get monday => 'Monday';
+
+  @override
+  String get tuesday => 'Tuesday';
+
+  @override
+  String get wednesday => 'Wednesday';
+
+  @override
+  String get thursday => 'Thursday';
+
+  @override
+  String get friday => 'Friday';
+
+  @override
+  String get saturday => 'Saturday';
+
+  @override
+  String get sunday => 'Sunday';
 }

@@ -132,5 +132,35 @@
     "exercisesCount2": "个练习",
     "min": "分钟",
     "setupAgenda": "设置日程",
-    "organizeWeekWorkouts": "安排您的每周训练"
+    "organizeWeekWorkouts": "安排您的每周训练",
+    "errorLoadingRoutines": "加载例程时出错: {error}",
+    "@errorLoadingRoutines": {
+      "placeholders": {
+        "error": {
+          "type": "String"
+        }
+      }
+    },
+    "account": "账户",
+    "configureSchedule": "配置日程",
+    "selectRoutinesForEachDay": "为每周的每一天选择例程",
+    "totalScheduledRoutines": "已安排的例程总数: {count}",
+    "@totalScheduledRoutines": {
+      "placeholders": {
+        "count": {
+          "type": "int"
+        }
+      }
+    },
+    "done": "完成",
+    "errorLoadingSchedule": "加载日程时出错",
+    "back": "返回",
+    "loadingRoutines": "正在加载例程...",
+    "monday": "星期一",
+    "tuesday": "星期二",
+    "wednesday": "星期三",
+    "thursday": "星期四",
+    "friday": "星期五",
+    "saturday": "星期六",
+    "sunday": "星期日"
   }

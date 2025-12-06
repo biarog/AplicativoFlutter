@@ -3,6 +3,7 @@ import 'package:widgetbook/widgetbook.dart';
 import 'package:widgetbook_annotation/widgetbook_annotation.dart' as widgetbook;
 import 'package:widgetbook_workspace/main.directories.g.dart';
 import 'package:aplicativo_flutter/providers/theme_provider.dart' as theme_provider;
+import 'package:aplicativo_flutter/l10n/app_localizations.dart';
 // profile stories removed
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -109,15 +110,106 @@ class WidgetbookApp extends StatelessWidget {
       // selected theme. We use it to synchronize the currently selected
       // ThemeData into the app's `themeSettingsProvider` so Riverpod-driven
       // widgets react to theme changes made by the Theme addon.
-      appBuilder: (context, child) => SyncThemeBridge(child: child),
+      appBuilder: (context, child) => LocalizationBridge(
+        child: SyncThemeBridge(child: child),
+      ),
       addons: [
         ViewportAddon([
           Viewports.none,
           ...IosViewports.all,
           ...AndroidViewports.all,
         ]),
-        MaterialThemeAddon(themes: generatedThemes)
+        MaterialThemeAddon(themes: generatedThemes),
       ],
+    );
+  }
+}
+
+// Provides localization support to widgets in widgetbook
+class LocalizationBridge extends ConsumerStatefulWidget {
+  final Widget child;
+  const LocalizationBridge({required this.child, super.key});
+
+  @override
+  ConsumerState<LocalizationBridge> createState() => _LocalizationBridgeState();
+}
+
+class _LocalizationBridgeState extends ConsumerState<LocalizationBridge> {
+  Locale _currentLocale = const Locale('en');
+
+  @override
+  Widget build(BuildContext context) {
+    return Localizations.override(
+      context: context,
+      locale: _currentLocale,
+      child: MaterialApp(
+        locale: _currentLocale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          appBar: AppBar(
+            title: const Text('Widgetbook'),
+          ),
+          bottomNavigationBar: BottomAppBar(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Wrap(
+                spacing: 8.0,
+                alignment: WrapAlignment.center,
+                children: [
+                  const Text('Language:'),
+                  FilterChip(
+                    label: const Text('English'),
+                    selected: _currentLocale.languageCode == 'en',
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() => _currentLocale = const Locale('en'));
+                      }
+                    },
+                  ),
+                  FilterChip(
+                    label: const Text('Português'),
+                    selected: _currentLocale.languageCode == 'pt',
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() => _currentLocale = const Locale('pt'));
+                      }
+                    },
+                  ),
+                  FilterChip(
+                    label: const Text('Español'),
+                    selected: _currentLocale.languageCode == 'es',
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() => _currentLocale = const Locale('es'));
+                      }
+                    },
+                  ),
+                  FilterChip(
+                    label: const Text('Français'),
+                    selected: _currentLocale.languageCode == 'fr',
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() => _currentLocale = const Locale('fr'));
+                      }
+                    },
+                  ),
+                  FilterChip(
+                    label: const Text('中文'),
+                    selected: _currentLocale.languageCode == 'zh',
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() => _currentLocale = const Locale('zh'));
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          body: widget.child,
+        ),
+      ),
     );
   }
 }

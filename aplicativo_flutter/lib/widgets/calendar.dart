@@ -515,17 +515,17 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
 
   Widget _buildFooterCard(BuildContext context) {
     return Card(
-      color: Colors.grey[100],
+      color: Theme.of(context).colorScheme.secondary,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Container(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(8)),
-          child: const Icon(Icons.settings, color: Colors.black54),
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(8)),
+          child: Icon(Icons.settings, color: Theme.of(context).colorScheme.inverseSurface),
         ),
-        title: Text('Configurar Agenda', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
-        subtitle: Text('Organize seus treinos da semana', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
+        title: Text('Configurar Agenda', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        subtitle: Text('Organize seus treinos da semana', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
         onTap: () {
           Navigator.push(
             context,

@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../providers/schedule_provider.dart';
 import '../providers/routine_provider.dart';
 import '../screens/configure_schedule_screen.dart';
+import '../screens/routine_player_screen.dart';
+import '../models/routine.dart';
 
 class Workout {
   final String title;
@@ -118,10 +120,11 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
         late String info;
         late int exercisesCount;
         late int durationMinutes;
+        late final Routine? todayRoutine;
         
         if (todayRoutineId != null) {
           try {
-            final todayRoutine = routines.firstWhere(
+            todayRoutine = routines.firstWhere(
               (r) => r.id == todayRoutineId,
             );
             
@@ -130,10 +133,12 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
             durationMinutes = (todayRoutine.totalDuration / 60).round();
             info = '$exercisesCount exercícios · $durationMinutes min';
           } catch (e) {
+            todayRoutine = null;
             title = 'Nenhum treino definido para hoje';
             info = 'Configure sua agenda para começar';
           }
         } else {
+          todayRoutine = null;
           title = 'Nenhum treino definido para hoje';
           info = 'Configure sua agenda para começar';
         }
@@ -168,8 +173,16 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                   ),
                 ),
                 IconButton(
-                  onPressed: () {},
-                  icon: Icon(Icons.play_arrow, color: primary),
+                  onPressed: todayRoutine != null
+                      ? () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => RoutinePlayerScreen(routine: todayRoutine!),
+                            ),
+                          );
+                        }
+                      : null,
+                  icon: Icon(Icons.play_arrow, color: todayRoutine != null ? primary : Colors.grey),
                 )
               ],
             ),

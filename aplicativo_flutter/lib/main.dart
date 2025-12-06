@@ -49,11 +49,15 @@ class MainApp extends ConsumerWidget {
     final lightScheme = ColorScheme.light(
       primary: settings.lightPrimary,
       secondary: settings.lightSecondary,
-      surface: Colors.white,
+      tertiary: settings.lightTerciary,
+      surface: Colors.grey[200]!,
+      inverseSurface: Colors.grey[800]!,
       error: settings.lightError,
-      onPrimary: Colors.white,
-      onSecondary: Colors.black,
+      onPrimary: Colors.black,
+      onSecondary: Colors.white,
+      onTertiary: Colors.white,
       onSurface: Colors.black,
+      onInverseSurface: Colors.white,
       onError: Colors.white,
       brightness: Brightness.light
     );
@@ -61,11 +65,15 @@ class MainApp extends ConsumerWidget {
     final darkScheme = ColorScheme.dark(
       primary: settings.darkPrimary,
       secondary: settings.darkSecondary,
+      tertiary: settings.darkTerciary,
       surface: Colors.grey[900]!,
+      inverseSurface: Colors.grey[200]!,
       error: settings.darkError,
       onPrimary: Colors.white,
       onSecondary: Colors.black,
+      onTertiary: Colors.black,
       onSurface: Colors.white,
+      onInverseSurface: Colors.black,
       onError: Colors.white,
       brightness: Brightness.dark
     );
@@ -276,6 +284,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(AppLocalizations.of(context)!.yourRoutines, style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: 8),
+          Container(
+            height: 3,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const SizedBox(height: 12),
           if (_routines.isEmpty) ...[
             Text(AppLocalizations.of(context)!.noRoutinesYet),
@@ -287,19 +303,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 itemBuilder: (context, index) {
                   final routine = _routines[index];
                   return Card(
+                    color: Theme.of(context).colorScheme.tertiary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                       side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 1.0),
                     ),
                     child: ListTile(
-                      title: Text(routine.name),
-                      subtitle: Text('${routine.exercises.length} exercises • ~${routine.totalDuration}s'),
+                      title: Text(
+                        routine.name, 
+                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)
+                      ),
+                      subtitle: Text(
+                        '${routine.exercises.length} exercises • ~${routine.totalDuration}s',
+                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary),
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                              backgroundColor: Theme.of(context).colorScheme.inverseSurface,
                             ),
                             child: Text(AppLocalizations.of(context)!.play),
                             onPressed: () {
@@ -343,7 +367,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 }
                               });
                             },
-                            icon: const Icon(Icons.delete_outline),
+                            icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.primary,),
                           ),
                         ],
                       ),

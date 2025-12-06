@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/routine.dart';
+import '../providers/local_routines_provider.dart';
 
 class CreateRoutineScreen extends ConsumerStatefulWidget {
   const CreateRoutineScreen({super.key});
@@ -176,6 +177,9 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
       exercises: List.of(exercises),
     );
 
+    // Sempre salvar localmente
+    ref.read(localRoutinesProvider.notifier).addRoutine(routine);
+
     // Capture UI handles before any async gaps so we don't use
     // BuildContext after awaiting (fixes analyzer lint).
     final messenger = ScaffoldMessenger.of(context);
@@ -203,6 +207,8 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
     }
 
     // No signed-in user: just return the routine (local/in-memory save).
+    if (!mounted) return;
+    messenger.showSnackBar(const SnackBar(content: Text('Routine saved locally')));
     navigator.pop(routine);
   }
 

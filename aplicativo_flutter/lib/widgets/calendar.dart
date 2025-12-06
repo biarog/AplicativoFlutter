@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../providers/schedule_provider.dart';
+import '../providers/routine_provider.dart';
+import '../screens/configure_schedule_screen.dart';
 
 class Workout {
   final String title;
@@ -25,12 +28,20 @@ class CalendarWidget extends ConsumerStatefulWidget {
   ConsumerState<CalendarWidget> createState() => _CalendarWidgetState();
 }
 
-  DateTime _viewMonth = DateTime.now();
-  DateTime? _selectedDate;
-
 class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
+  late DateTime _viewMonth;
+  DateTime? _selectedDate;
+  
   // Mock data: YYYY-MM-DD -> list of workouts
-  late final Map<String, List<Workout>> _workoutsByDate = _buildMockData();
+  late final Map<String, List<Workout>> _workoutsByDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewMonth = DateTime.now();
+    _selectedDate = null;
+    _workoutsByDate = _buildMockData();
+  }
 
   static Map<String, List<Workout>> _buildMockData() {
     return {
@@ -87,65 +98,145 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
     return cells;
   }
 
-  Widget _buildTopCard(BuildContext context) {
-    // pick today's workouts if any or a sample routine
-    final todayKey = _formatKey(DateTime.now());
-    final todays = _workoutsByDate[todayKey] ?? [];
+  Widget _buildTopCard(BuildContext context, WidgetRef ref) {
+    final schedule = ref.watch(scheduleProvider);
+    final routinesAsync = ref.watch(userRoutinesProvider);
+    
+    final today = DateTime.now();
+    final todayRoutineId = schedule.getRoutineIdForDay(today.weekday);
 
-    final title = todays.isNotEmpty ? todays.first.title : 'Treino de Hoje';
-    final time = todays.isNotEmpty ? todays.first.time : '08:00';
-    final info = todays.isNotEmpty ? '${todays.first.exercises} exercícios · ${todays.first.minutes} min' : 'Nenhum treino hoje';
+    debugPrint('Debug Calendar: todayRoutineId=$todayRoutineId, today.weekday=${today.weekday}');
+    debugPrint('Debug Calendar: schedule.routineIdsByDay=${schedule.routineIdsByDay}');
 
     final primary = Theme.of(context).colorScheme.primary;
     final secondary = Theme.of(context).colorScheme.secondary;
 
-    return Card(
-      color: secondary.withAlpha((0.12 * 255).round()),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: primary.withAlpha((0.12 * 255).round()),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.fitness_center, color: primary, size: 28),
+    return routinesAsync.when(
+      data: (routines) {
+        // Find the configured routine for today
+        late String title;
+        late String info;
+        late int exercisesCount;
+        late int durationMinutes;
+        
+        if (todayRoutineId != null) {
+          try {
+            final todayRoutine = routines.firstWhere(
+              (r) => r.id == todayRoutineId,
+            );
+            
+            title = todayRoutine.name;
+            exercisesCount = todayRoutine.exercises.length;
+            durationMinutes = (todayRoutine.totalDuration / 60).round();
+            info = '$exercisesCount exercícios · $durationMinutes min';
+          } catch (e) {
+            title = 'Nenhum treino definido para hoje';
+            info = 'Configure sua agenda para começar';
+          }
+        } else {
+          title = 'Nenhum treino definido para hoje';
+          info = 'Configure sua agenda para começar';
+        }
+
+        return Card(
+          color: secondary.withAlpha((0.12 * 255).round()),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: primary.withAlpha((0.12 * 255).round()),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.fitness_center, color: primary, size: 28),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Treino de Hoje', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 6),
+                      Text(info, style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(Icons.play_arrow, color: primary),
+                )
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Treino de Hoje', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 6),
-                  Row(children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: primary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(time, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(info, style: Theme.of(context).textTheme.bodySmall),
-                  ])
-                ],
-              ),
+          ),
+        );
+      },
+      loading: () {
+        return Card(
+          color: secondary.withAlpha((0.12 * 255).round()),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: primary.withAlpha((0.12 * 255).round()),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.fitness_center, color: primary, size: 28),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: CircularProgressIndicator(),
+                ),
+              ],
             ),
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.play_arrow, color: primary),
-            )
-          ],
-        ),
-      ),
+          ),
+        );
+      },
+      error: (err, stack) {
+        return Card(
+          color: secondary.withAlpha((0.12 * 255).round()),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: primary.withAlpha((0.12 * 255).round()),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.fitness_center, color: primary, size: 28),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Treino de Hoje', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      Text('Erro ao carregar rotinas', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 6),
+                      Text('Tente novamente mais tarde', style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -307,7 +398,14 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
         ),
         title: Text('Configurar Agenda', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
         subtitle: Text('Organize seus treinos da semana', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ConfigureScheduleScreen(),
+            ),
+          );
+        },
       ),
     );
   }
@@ -322,7 +420,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildTopCard(context),
+              _buildTopCard(context, ref),
               const SizedBox(height: 12),
               _buildCalendar(context),
               const SizedBox(height: 12),

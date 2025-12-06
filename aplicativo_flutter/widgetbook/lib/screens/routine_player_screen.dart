@@ -11,5 +11,5 @@ import 'package:widgetbook_workspace/mocks/mock_routine.dart';
 Widget buildCreateRoutineScreenUseCase(BuildContext context) {
   // Widgetbook builds widgets outside the normal app tree. Wrap with
   // ProviderScope so Riverpod providers used by the dialog are available.
-  return ProviderScope(child: RoutinePlayerScreen(routine: sampleRoutine));
+  return ProviderScope(child: RoutinePlayerScreen(routine: sampleRoutine),);
 }

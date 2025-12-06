@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/app_localizations.dart';
+
 class Workout {
   final String title;
   final String time; // HH:mm
@@ -31,6 +33,15 @@ class CalendarWidget extends ConsumerStatefulWidget {
 class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
   // Mock data: YYYY-MM-DD -> list of workouts
   late final Map<String, List<Workout>> _workoutsByDate = _buildMockData();
+
+  String _localeTag(BuildContext context) => Localizations.localeOf(context).toLanguageTag();
+
+  List<String> _weekdayLabels(BuildContext context) {
+    // Start on a Sunday to align with the calendar grid.
+    final baseSunday = DateTime(2024, 6, 2);
+    final localeTag = _localeTag(context);
+    return List.generate(7, (index) => DateFormat.E(localeTag).format(baseSunday.add(Duration(days: index))));
+  }
 
   static Map<String, List<Workout>> _buildMockData() {
     return {
@@ -88,13 +99,16 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
   }
 
   Widget _buildTopCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // pick today's workouts if any or a sample routine
     final todayKey = _formatKey(DateTime.now());
     final todays = _workoutsByDate[todayKey] ?? [];
 
-    final title = todays.isNotEmpty ? todays.first.title : 'Treino de Hoje';
+    final title = todays.isNotEmpty ? todays.first.title : l10n.todaysWorkout;
     final time = todays.isNotEmpty ? todays.first.time : '08:00';
-    final info = todays.isNotEmpty ? '${todays.first.exercises} exercícios · ${todays.first.minutes} min' : 'Nenhum treino hoje';
+    final info = todays.isNotEmpty
+        ? '${todays.first.exercises} ${l10n.exercisesCount2} · ${todays.first.minutes} ${l10n.min}'
+        : l10n.noWorkoutThisDay;
 
     final primary = Theme.of(context).colorScheme.primary;
     final secondary = Theme.of(context).colorScheme.secondary;
@@ -120,7 +134,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Treino de Hoje', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
+                  Text(l10n.todaysWorkout, style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
@@ -151,7 +165,9 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
 
   Widget _buildCalendar(BuildContext context) {
     final headerStyle = Theme.of(context).textTheme.titleMedium;
-    final monthYear = DateFormat.yMMMM('pt_BR').format(_viewMonth);
+    final localeTag = _localeTag(context);
+    final monthYear = DateFormat.yMMMM(localeTag).format(_viewMonth);
+    final weekdayLabels = _weekdayLabels(context);
     final days = _generateMonthGrid(_viewMonth);
 
     return Column(
@@ -170,7 +186,9 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
         // Weekday labels
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((e) => Expanded(child: Center(child: Text(e, style: TextStyle(fontWeight: FontWeight.w600))))).toList(),
+          children: weekdayLabels
+              .map((e) => Expanded(child: Center(child: Text(e, style: const TextStyle(fontWeight: FontWeight.w600)))))
+              .toList(),
         ),
         const SizedBox(height: 8),
         // Grid
@@ -239,10 +257,11 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
   }
 
   Widget _buildDayPanel(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_selectedDate == null) return const SizedBox.shrink();
 
     final list = _workoutsFor(_selectedDate!);
-    final dateLabel = DateFormat('d MMMM', 'pt_BR').format(_selectedDate!);
+    final dateLabel = DateFormat('d MMMM', _localeTag(context)).format(_selectedDate!);
 
     return Card(
       color: Theme.of(context).colorScheme.primary.withAlpha((0.06 * 255).round()),
@@ -269,7 +288,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
             if (list.isEmpty)
               Padding(
                 padding: const EdgeInsets.all(12.0),
-                child: Text('Nenhum treino realizado neste dia', style: Theme.of(context).textTheme.bodyMedium),
+                child: Text(l10n.noWorkoutThisDay, style: Theme.of(context).textTheme.bodyMedium),
               )
             else
               Column(
@@ -282,31 +301,33 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
   }
 
   Widget _buildWorkoutCard(BuildContext context, Workout w) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
         leading: CircleAvatar(backgroundColor: w.color, child: const Icon(Icons.fitness_center, color: Colors.white)),
         title: Text(w.title, style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text('${w.time} · ${w.exercises} exercícios · ${w.minutes} min'),
+        subtitle: Text('${w.time} · ${w.exercises} ${l10n.exercisesCount2} · ${w.minutes} ${l10n.min}'),
         trailing: IconButton(onPressed: () {}, icon: const Icon(Icons.chevron_right)),
       ),
     );
   }
 
   Widget _buildFooterCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
-      color: Colors.grey[100],
+      color: Theme.of(context).colorScheme.secondary,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Container(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(8)),
-          child: const Icon(Icons.settings, color: Colors.black54),
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(8)),
+          child: Icon(Icons.settings, color: Theme.of(context).colorScheme.inverseSurface),
         ),
-        title: Text('Configurar Agenda', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
-        subtitle: Text('Organize seus treinos da semana', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
+        title: Text(l10n.setupAgenda, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        subtitle: Text(l10n.organizeWeekWorkouts, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
         onTap: () {},
       ),
     );

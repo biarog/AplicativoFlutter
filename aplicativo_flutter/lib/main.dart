@@ -108,199 +108,189 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // storage (database / Firestore) as needed.
   final List<Routine> _routines = [];
 
+  void _showOptionsModal() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        final localRef = ref;
+        final presets = localRef.read(themeSettingsProvider.notifier).presets;
+        final currentIsDark = localRef.read(themeSettingsProvider).isDark;
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.settings),
+                  title: Text(AppLocalizations.of(context)!.appSettings),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    showDialog<void>(
+                      context: context,
+                      builder: (_) => const AccountSettingsDialog(),
+                    );
+                  },
+                ),
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(AppLocalizations.of(context)!.theme, style: Theme.of(context).textTheme.titleMedium),
+                  ),
+                ),
+                StatefulBuilder(builder: (context, setState) {
+                  final isDark = localRef.read(themeSettingsProvider).isDark;
+                  return SwitchListTile(
+                    title: Text(AppLocalizations.of(context)!.darkMode),
+                    value: isDark,
+                    onChanged: (v) {
+                      localRef.read(themeSettingsProvider.notifier).setDark(v);
+                      setState(() {});
+                    },
+                  );
+                }),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(AppLocalizations.of(context)!.themeColor, style: Theme.of(context).textTheme.titleMedium),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Wrap(
+                    spacing: 12,
+                    children: presets.map((p) {
+                      final c = currentIsDark ? p.darkPrimary : p.lightPrimary;
+                      return GestureDetector(
+                        onTap: () {
+                          localRef.read(themeSettingsProvider.notifier).applyPresetById(p.id);
+                          Navigator.of(context).pop();
+                        },
+                        child: CircleAvatar(
+                          backgroundColor: c,
+                          radius: 20,
+                          child: localRef.read(themeSettingsProvider).primaryColor == c
+                              ? const Icon(Icons.check, color: Colors.white)
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(AppLocalizations.of(context)!.language, style: Theme.of(context).textTheme.titleMedium),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Wrap(
+                    spacing: 8,
+                    children: [
+                      const Locale('en'),
+                      const Locale('pt'),
+                      const Locale('es'),
+                      const Locale('fr'),
+                      const Locale('zh'),
+                    ].map((l) {
+                      final currentLocale = localRef.watch(localeProvider);
+                      final isSelected = (currentLocale?.languageCode ?? '') == l.languageCode;
+                      final localeNames = {
+                        'en': 'English',
+                        'pt': 'Português',
+                        'es': 'Español',
+                        'fr': 'Français',
+                        'zh': '中文',
+                      };
+                      return FilterChip(
+                        label: Text(localeNames[l.languageCode] ?? l.languageCode),
+                        selected: isSelected,
+                        onSelected: (_) {
+                          localRef.read(localeProvider.notifier).setLocale(l);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.sort),
+                  title: Text(AppLocalizations.of(context)!.sortRoutines),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.sortNotImplemented)));
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever),
+                  title: Text(AppLocalizations.of(context)!.deleteAllRoutines),
+                  subtitle: Text(AppLocalizations.of(context)!.removeAllRoutinesDesc),
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    final messenger = ScaffoldMessenger.of(context);
+                    final auth = localRef.read(authStateChangesProvider);
+                    final user = auth.maybeWhen(data: (u) => u, orElse: () => null);
+                    if (user == null) {
+                      messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.notSignedIn)));
+                      return;
+                    }
+
+                    final l10n = AppLocalizations.of(context)!;
+                    final allDeletedMsg = l10n.allRoutinesDeleted;
+                    String getFailedMsg(String err) => l10n.failedToDeleteRoutines(err);
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(l10n.deleteAllRoutines),
+                        content: Text(l10n.deleteAllRoutinesConfirm),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+                          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.delete)),
+                        ],
+                      ),
+                    );
+                    if (confirm != true) return;
+
+                    try {
+                      await localRef.read(authRepositoryProvider).clearRoutinesForUser(user.uid);
+                      if (!mounted) return;
+                      setState(() => _routines.clear());
+                      messenger.showSnackBar(SnackBar(content: Text(allDeletedMsg)));
+                    } catch (e) {
+                      messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.filter_list),
+                  title: Text(AppLocalizations.of(context)!.filter),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.filterNotImplemented)));
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildRoutinesPage() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(AppLocalizations.of(context)!.yourRoutines, style: Theme.of(context).textTheme.headlineMedium),
-              ElevatedButton.icon(
-                onPressed: () {
-                  showModalBottomSheet<void>(
-                    context: context,
-                    builder: (context) {
-                      final localRef = ref;
-                      final presets = localRef.read(themeSettingsProvider.notifier).presets;
-                      final currentIsDark = localRef.read(themeSettingsProvider).isDark;
-
-                      return SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ListTile(
-                                leading: const Icon(Icons.settings),
-                                title: Text(AppLocalizations.of(context)!.appSettings),
-                                onTap: () {
-                                  Navigator.of(context).pop();
-                                  showDialog<void>(
-                                    context: context,
-                                    builder: (_) => const AccountSettingsDialog(),
-                                  );
-                                },
-                              ),
-                              const Divider(),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(AppLocalizations.of(context)!.theme, style: Theme.of(context).textTheme.titleMedium),
-                                ),
-                              ),
-                              StatefulBuilder(builder: (context, setState) {
-                                final isDark = localRef.read(themeSettingsProvider).isDark;
-                                return SwitchListTile(
-                                  title: Text(AppLocalizations.of(context)!.darkMode),
-                                  value: isDark,
-                                  onChanged: (v) {
-                                    localRef.read(themeSettingsProvider.notifier).setDark(v);
-                                    setState(() {});
-                                  },
-                                );
-                              }),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(AppLocalizations.of(context)!.themeColor, style: Theme.of(context).textTheme.titleMedium),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                child: Wrap(
-                                  spacing: 12,
-                                  children: presets.map((p) {
-                                    final c = currentIsDark ? p.darkPrimary : p.lightPrimary;
-                                    return GestureDetector(
-                                      onTap: () {
-                                        localRef.read(themeSettingsProvider.notifier).applyPresetById(p.id);
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: CircleAvatar(
-                                        backgroundColor: c,
-                                        radius: 20,
-                                        child: localRef.read(themeSettingsProvider).primaryColor == c
-                                            ? const Icon(Icons.check, color: Colors.white)
-                                            : null,
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                              const Divider(),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(AppLocalizations.of(context)!.language, style: Theme.of(context).textTheme.titleMedium),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                child: Wrap(
-                                  spacing: 8,
-                                  children: [
-                                    Locale('en'),
-                                    Locale('pt'),
-                                    Locale('es'),
-                                    Locale('fr'),
-                                    Locale('zh'),
-                                  ].map((l) {
-                                    final currentLocale = localRef.watch(localeProvider);
-                                    final isSelected = (currentLocale?.languageCode ?? '') == l.languageCode;
-                                    final localeNames = {
-                                      'en': 'English',
-                                      'pt': 'Português',
-                                      'es': 'Español',
-                                      'fr': 'Français',
-                                      'zh': '中文',
-                                    };
-                                    return FilterChip(
-                                      label: Text(localeNames[l.languageCode] ?? l.languageCode),
-                                      selected: isSelected,
-                                      onSelected: (_) {
-                                        localRef.read(localeProvider.notifier).setLocale(l);
-                                      },
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                              const Divider(),
-                              ListTile(
-                                leading: const Icon(Icons.sort),
-                                title: Text(AppLocalizations.of(context)!.sortRoutines),
-                                onTap: () {
-                                  Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.sortNotImplemented)));
-                                },
-                              ),
-                              // Delete all routines option inside the options modal
-                              ListTile(
-                                leading: const Icon(Icons.delete_forever),
-                                title: Text(AppLocalizations.of(context)!.deleteAllRoutines),
-                                subtitle: Text(AppLocalizations.of(context)!.removeAllRoutinesDesc),
-                                onTap: () async {
-                                  Navigator.of(context).pop();
-                                  final messenger = ScaffoldMessenger.of(context);
-                                  final auth = localRef.read(authStateChangesProvider);
-                                  final user = auth.maybeWhen(data: (u) => u, orElse: () => null);
-                                  if (user == null) {
-                                    messenger.showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.notSignedIn)));
-                                    return;
-                                  }
-
-                                  final l10n = AppLocalizations.of(context)!;
-                                  final allDeletedMsg = l10n.allRoutinesDeleted;
-                                  String getFailedMsg(String err) => l10n.failedToDeleteRoutines(err);
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: Text(l10n.deleteAllRoutines),
-                                      content: Text(l10n.deleteAllRoutinesConfirm),
-                                      actions: [
-                                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
-                                        TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.delete)),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm != true) return;
-
-                                  try {
-                                    await localRef.read(authRepositoryProvider).clearRoutinesForUser(user.uid);
-                                    if (!mounted) return;
-                                    setState(() => _routines.clear());
-                                    messenger.showSnackBar(SnackBar(content: Text(allDeletedMsg)));
-                                  } catch (e) {
-                                    messenger.showSnackBar(SnackBar(content: Text(getFailedMsg(e.toString()))));
-                                  }
-                                },
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.filter_list),
-                                title: Text(AppLocalizations.of(context)!.filter),
-                                onTap: () {
-                                  Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.filterNotImplemented)));
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-                icon: const Icon(Icons.more_vert),
-                label: Text(AppLocalizations.of(context)!.options),
-                style: ElevatedButton.styleFrom(elevation: 0),
-              ),
-            ],
-          ),
+          Text(AppLocalizations.of(context)!.yourRoutines, style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 12),
           if (_routines.isEmpty) ...[
             Text(AppLocalizations.of(context)!.noRoutinesYet),
@@ -612,6 +602,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     }),
                   ),
                 ],
+          
+          // Options button - always visible
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: AppLocalizations.of(context)!.options,
+            onPressed: _showOptionsModal,
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ],
       ),
       body: IndexedStack(

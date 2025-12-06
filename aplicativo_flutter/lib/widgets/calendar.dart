@@ -62,161 +62,194 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
   }
 
   Widget _buildTopCard(BuildContext context, WidgetRef ref) {
-    final schedule = ref.watch(scheduleProvider);
+    final scheduleAsync = ref.watch(scheduleProvider);
     final routinesAsync = ref.watch(userRoutinesProvider);
+    final completedRoutinesAsync = ref.watch(completedRoutinesProvider);
     
     final today = DateTime.now();
-    final todayRoutineId = schedule.getRoutineIdForDay(today.weekday);
-
-    debugPrint('Debug Calendar: todayRoutineId=$todayRoutineId, today.weekday=${today.weekday}');
-    debugPrint('Debug Calendar: schedule.routineIdsByDay=${schedule.routineIdsByDay}');
+    final todayDateString = DateTime(today.year, today.month, today.day).toIso8601String();
 
     final primary = Theme.of(context).colorScheme.primary;
     final secondary = Theme.of(context).colorScheme.secondary;
 
-    return routinesAsync.when(
-      data: (routines) {
-        // Find the configured routine for today
-        late String title;
-        late String info;
-        late int exercisesCount;
-        late int durationMinutes;
-        late final Routine? todayRoutine;
-        
-        if (todayRoutineId != null) {
-          try {
-            todayRoutine = routines.firstWhere(
-              (r) => r.id == todayRoutineId,
-            );
-            
-            title = todayRoutine.name;
-            exercisesCount = todayRoutine.exercises.length;
-            durationMinutes = (todayRoutine.totalDuration / 60).round();
-            info = '$exercisesCount exercícios · $durationMinutes min';
-          } catch (e) {
-            // Rotina não encontrada (foi deletada) - limpar do schedule
-            todayRoutine = null;
-            title = 'Nenhum treino definido para hoje';
-            info = 'Configure sua agenda para começar';
-            
-            // Limpar rotina deletada do schedule
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              ref.read(scheduleProvider.notifier).setRoutineForDay(today.weekday, null);
-            });
-          }
-        } else {
-          todayRoutine = null;
-          title = 'Nenhum treino definido para hoje';
-          info = 'Configure sua agenda para começar';
-        }
+    return scheduleAsync.when(
+      data: (schedule) {
+        final todayRoutineIds = schedule.getRoutineIdsForDay(today.weekday);
 
-        return Card(
-          color: secondary.withAlpha((0.12 * 255).round()),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: primary.withAlpha((0.12 * 255).round()),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.fitness_center, color: primary, size: 28),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Treino de Hoje', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 6),
-                      Text(info, style: Theme.of(context).textTheme.bodySmall),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: todayRoutine != null
-                      ? () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => RoutinePlayerScreen(routine: todayRoutine!),
+        return routinesAsync.when(
+          data: (routines) {
+            return completedRoutinesAsync.when(
+              data: (completedRoutines) {
+                // Filter routines that are scheduled for today but NOT completed
+                final todayRoutinesNotCompleted = <Routine>[];
+                
+                for (final routineId in todayRoutineIds) {
+                  try {
+                    final routine = routines.firstWhere((r) => r.id == routineId);
+                    // Check if routine was NOT completed today
+                    final wasCompletedToday = completedRoutines[routineId]?.contains(todayDateString) ?? false;
+                    
+                    if (!wasCompletedToday) {
+                      todayRoutinesNotCompleted.add(routine);
+                    }
+                  } catch (e) {
+                    // Rotina não encontrada (foi deletada) - limpar do schedule
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      ref.read(scheduleProvider.notifier).removeRoutineFromDay(today.weekday, routineId);
+                    });
+                  }
+                }
+
+                // Build content based on available routines
+                late String title;
+                late String info;
+
+                if (todayRoutinesNotCompleted.isEmpty) {
+                  title = 'Nenhum treino para hoje';
+                  info = 'Todas as rotinas foram completadas!';
+                } else {
+                  title = '${todayRoutinesNotCompleted.length} rotina${todayRoutinesNotCompleted.length > 1 ? 's' : ''}';
+                  
+                  final totalExercises = todayRoutinesNotCompleted.fold<int>(
+                    0,
+                    (sum, routine) => sum + routine.exercises.length,
+                  );
+                  final totalDurationMinutes = todayRoutinesNotCompleted.fold<int>(
+                    0,
+                    (sum, routine) => sum + (routine.totalDuration / 60).round(),
+                  );
+                  
+                  info = '$totalExercises exercícios · $totalDurationMinutes min';
+                }
+
+                return Card(
+                  color: secondary.withAlpha((0.12 * 255).round()),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: primary.withAlpha((0.12 * 255).round()),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.fitness_center, color: primary, size: 28),
                             ),
-                          );
-                        }
-                      : null,
-                  icon: Icon(Icons.play_arrow, color: todayRoutine != null ? primary : Colors.grey),
-                )
-              ],
-            ),
-          ),
-        );
-      },
-      loading: () {
-        return Card(
-          color: secondary.withAlpha((0.12 * 255).round()),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: primary.withAlpha((0.12 * 255).round()),
-                    borderRadius: BorderRadius.circular(8),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Treino de Hoje', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 6),
+                                  Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 6),
+                                  Text(info, style: Theme.of(context).textTheme.bodySmall),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        // List of today's routines
+                        if (todayRoutinesNotCompleted.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Divider(color: primary.withAlpha((0.2 * 255).round()), height: 12),
+                          const SizedBox(height: 8),
+                          ...todayRoutinesNotCompleted.map((routine) {
+                            final exerciseCount = routine.exercises.length;
+                            final durationMinutes = (routine.totalDuration / 60).round();
+                            
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(routine.name, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                                        const SizedBox(height: 4),
+                                        Text('$exerciseCount exercícios · $durationMinutes min', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => RoutinePlayerScreen(routine: routine),
+                                        ),
+                                      );
+                                    },
+                                    icon: Icon(Icons.play_arrow, color: primary),
+                                    iconSize: 24,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ],
+                    ),
                   ),
-                  child: Icon(Icons.fitness_center, color: primary, size: 28),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
+                );
+              },
+              loading: () => Card(
+                color: secondary.withAlpha((0.12 * 255).round()),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: const Padding(
+                  padding: EdgeInsets.all(12.0),
                   child: CircularProgressIndicator(),
                 ),
-              ],
+              ),
+              error: (err, stack) => Card(
+                color: secondary.withAlpha((0.12 * 255).round()),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Text('Erro ao carregar rotinas completadas'),
+                ),
+              ),
+            );
+          },
+          loading: () => Card(
+            color: secondary.withAlpha((0.12 * 255).round()),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: const Padding(
+              padding: EdgeInsets.all(12.0),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          error: (err, stack) => Card(
+            color: secondary.withAlpha((0.12 * 255).round()),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Text('Erro ao carregar rotinas'),
             ),
           ),
         );
       },
-      error: (err, stack) {
-        return Card(
-          color: secondary.withAlpha((0.12 * 255).round()),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: primary.withAlpha((0.12 * 255).round()),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.fitness_center, color: primary, size: 28),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Treino de Hoje', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text('Erro ao carregar rotinas', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 6),
-                      Text('Tente novamente mais tarde', style: Theme.of(context).textTheme.bodySmall),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      loading: () => const Card(
+        child: Padding(
+          padding: EdgeInsets.all(12.0),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (err, stack) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Text('Erro ao carregar agenda: $err'),
+        ),
+      ),
     );
   }
 
@@ -227,49 +260,52 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
     
     // Watch completadas rotinas e schedule
     final completedRoutinesAsync = ref.watch(completedRoutinesProvider);
-    final schedule = ref.watch(scheduleProvider);
+    final scheduleAsync = ref.watch(scheduleProvider);
 
     return completedRoutinesAsync.when(
-      data: (completedMap) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
-              Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
-              IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Weekday labels
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((e) => Expanded(child: Center(child: Text(e, style: TextStyle(fontWeight: FontWeight.w600))))).toList(),
-          ),
-          const SizedBox(height: 8),
-          // Grid
-          SizedBox(
-            height: 320,
-            child: GridView.count(
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 7,
-              childAspectRatio: 1.1,
-              children: days.map((d) {
-                if (d == null) return const SizedBox.shrink();
+      data: (completedMap) => scheduleAsync.when(
+        data: (schedule) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
+                Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
+                IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Weekday labels
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((e) => Expanded(child: Center(child: Text(e, style: TextStyle(fontWeight: FontWeight.w600))))).toList(),
+            ),
+            const SizedBox(height: 8),
+            // Grid
+            SizedBox(
+              height: 320,
+              child: GridView.count(
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 7,
+                childAspectRatio: 1.1,
+                children: days.map((d) {
+                  if (d == null) return const SizedBox.shrink();
 
-                final isToday = _isToday(d);
-                final isSelected = _selectedDate != null && d.year == _selectedDate!.year && d.month == _selectedDate!.month && d.day == _selectedDate!.day;
-                
-                // Verificar se alguma rotina configurada para este dia foi completada
-                final routineIdForDay = schedule.getRoutineIdForDay(d.weekday);
-                final dateString = DateTime(d.year, d.month, d.day).toIso8601String();
-                final hasCompletedRoutine = routineIdForDay != null && 
-                    (completedMap[routineIdForDay]?.contains(dateString) ?? false);
-                
-                // Há rotina agendada mas não completada
-                final hasScheduledRoutine = routineIdForDay != null && !hasCompletedRoutine;
+                  final isToday = _isToday(d);
+                  final isSelected = _selectedDate != null && d.year == _selectedDate!.year && d.month == _selectedDate!.month && d.day == _selectedDate!.day;
+                  
+                  // Verificar se alguma rotina configurada para este dia foi completada
+                  final routineIdsForDay = schedule.getRoutineIdsForDay(d.weekday);
+                  final dateString = DateTime(d.year, d.month, d.day).toIso8601String();
+                  
+                  // Há alguma rotina completada neste dia?
+                  final hasCompletedRoutine = routineIdsForDay.isNotEmpty &&
+                      routineIdsForDay.any((id) => completedMap[id]?.contains(dateString) ?? false);
+                  
+                  // Há rotina agendada mas não completada
+                  final hasScheduledRoutine = routineIdsForDay.isNotEmpty && !hasCompletedRoutine;
 
                 Color bg = Colors.white;
                 Color textColor = Colors.black;
@@ -334,6 +370,37 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
             ),
           ),
         ],
+      ),
+        loading: () => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
+                Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
+                IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Center(child: CircularProgressIndicator()),
+          ],
+        ),
+        error: (err, stack) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
+                Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
+                IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Center(child: Text('Erro ao carregar agenda')),
+          ],
+        ),
       ),
       loading: () => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

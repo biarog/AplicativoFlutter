@@ -17,7 +17,7 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
   @override
   Widget build(BuildContext context) {
     final routinesAsync = ref.watch(userRoutinesProvider);
-    final schedule = ref.watch(scheduleProvider);
+    final scheduleAsync = ref.watch(scheduleProvider);
     
     return Scaffold(
       appBar: AppBar(
@@ -26,44 +26,66 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
       ),
       body: routinesAsync.when(
         data: (routines) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0).copyWith(bottom: 80.0),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Selecione uma rotina para cada dia da semana',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                      textAlign: TextAlign.center,
+          return scheduleAsync.when(
+            data: (schedule) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0).copyWith(bottom: 80.0),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Selecione rotinas para cada dia da semana',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        ...List.generate(
+                          7,
+                          (index) => _buildDaySelector(context, routines, weekDays[index], index, schedule),
+                        ),
+                        const SizedBox(height: 24),
+                        // Info
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withAlpha((0.1 * 255).round()),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Total de rotinas agendadas: ${schedule.routineIdsByDay.values.fold<int>(0, (sum, list) => sum + list.length)}',
+                            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Concluído'),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                    ...List.generate(
-                      7,
-                      (index) => _buildDaySelector(context, routines, weekDays[index], index, schedule),
-                    ),
-                    const SizedBox(height: 24),
-                    // Debug info - mostrar estado atual
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withAlpha((0.1 * 255).round()),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Configurações salvas: ${schedule.routineIdsByDay.values.where((v) => v != null).length} rotinas',
-                        style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Concluído'),
-                    ),
-                  ],
+                  ),
                 ),
+              );
+            },
+            loading: () => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            error: (err, stack) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  const Text('Erro ao carregar agenda'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Voltar'),
+                  ),
+                ],
               ),
             ),
           );
@@ -98,19 +120,21 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
   }
 
   Widget _buildDaySelector(BuildContext context, List<Routine> routines, String dayName, int dayIndex, WeeklySchedule schedule) {
-    final selectedRoutineId = schedule.routineIdsByDay[dayIndex];
+    final selectedRoutineIds = schedule.routineIdsByDay[dayIndex] ?? [];
     
-    // Validar se a rotina selecionada ainda existe
-    final isValidSelection = selectedRoutineId == null || 
-        routines.any((r) => r.id == selectedRoutineId);
+    // Validar se as rotinas selecionadas ainda existem
+    final validSelectedIds = selectedRoutineIds
+        .where((id) => routines.any((r) => r.id == id))
+        .toList();
     
-    // Se a rotina não existe mais, limpar a seleção
-    final validSelectedId = isValidSelection ? selectedRoutineId : null;
-    
-    // Se detectamos uma rotina inválida, limpar do schedule
-    if (!isValidSelection) {
+    // Se detectamos rotinas inválidas, limpar do schedule
+    if (validSelectedIds.length != selectedRoutineIds.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(scheduleProvider.notifier).setRoutineForDay(dayIndex, null);
+        for (final id in selectedRoutineIds) {
+          if (!routines.any((r) => r.id == id)) {
+            ref.read(scheduleProvider.notifier).removeRoutineFromDay(dayIndex, id);
+          }
+        }
       });
     }
 
@@ -125,36 +149,35 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
               dayName,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: DropdownButton<String?>(
-                value: validSelectedId,
-                isExpanded: true,
-                underline: const SizedBox(), // Remove default underline
-                hint: const Text('Selecione uma rotina'),
-                onChanged: (value) {
-                  debugPrint('Selecionado para $dayName (índice $dayIndex): $value');
-                  ref.read(scheduleProvider.notifier).setRoutineForDay(dayIndex, value);
+            const SizedBox(height: 12),
+            ...routines.map((routine) {
+              final isSelected = validSelectedIds.contains(routine.id);
+              return CheckboxListTile(
+                value: isSelected,
+                onChanged: (selected) {
+                  if (selected == true) {
+                    ref.read(scheduleProvider.notifier).addRoutineToDay(dayIndex, routine.id);
+                  } else {
+                    ref.read(scheduleProvider.notifier).removeRoutineFromDay(dayIndex, routine.id);
+                  }
                 },
-                items: [
-                  const DropdownMenuItem(
-                    value: null,
-                    child: Text('Nenhuma rotina'),
-                  ),
-                  ...routines.map(
-                    (routine) => DropdownMenuItem(
-                      value: routine.id,
-                      child: Text(routine.name),
-                    ),
-                  ),
-                ],
+                title: Text(routine.name, style: const TextStyle(fontSize: 14)),
+                subtitle: Text(
+                  '${routine.exercises.length} exercícios · ${(routine.totalDuration / 60).round()} min',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
+              );
+            }),
+            if (validSelectedIds.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                child: Text(
+                  'Nenhuma rotina selecionada',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic),
+                ),
               ),
-            ),
           ],
         ),
       ),

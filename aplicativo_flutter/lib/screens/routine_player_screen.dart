@@ -30,6 +30,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
   Timer? _ticker;
   bool _isPlaying = false;
   bool _awaitingVideo = false;
+  bool _userPaused = false; // Keeps track of manual pauses to avoid auto-starting
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
@@ -52,6 +53,9 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
       _setsRemaining = null;
       _totalSets = null;
     }
+
+    // Start automatically for timed exercises without videos once the first frame is ready.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _autoStartIfNoVideo());
   }
 
   Future<void> _initializeNotifications() async {
@@ -111,6 +115,11 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
     }
   }
 
+  void _stopTicker() {
+    _ticker?.cancel();
+    _ticker = null;
+  }
+
   void _start() {
     final ex = widget.routine.exercises.isNotEmpty
         ? widget.routine.exercises[_currentIndex]
@@ -118,18 +127,31 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
     if (ex is! TimedExercise) return; // only start for timed exercises
     if (_ticker != null) return; // already running
 
+    _userPaused = false;
     setState(() => _isPlaying = true);
     _startTimer();
   }
 
   void _pause() {
-    _ticker?.cancel();
-    _ticker = null;
+    _stopTicker();
     setState(() {
       _isPlaying = false;
       _awaitingVideo = false;
     });
+    _userPaused = true;
     _updateNotification();
+  }
+
+  bool _exerciseHasVideo(Exercise? ex) => (ex?.youtubeUrl?.isNotEmpty ?? false);
+
+  void _autoStartIfNoVideo() {
+    final ex = widget.routine.exercises.isNotEmpty
+        ? widget.routine.exercises[_currentIndex]
+        : null;
+
+    if (ex is TimedExercise && !_exerciseHasVideo(ex) && !_isPlaying && _ticker == null && !_userPaused) {
+      _start();
+    }
   }
 
   void _startTimer() {
@@ -155,7 +177,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
   }
 
   void _nextInternal() {
-    _ticker?.cancel();
+    _stopTicker();
     if (_currentIndex < widget.routine.exercises.length - 1) {
       setState(() {
         _currentIndex += 1;
@@ -174,7 +196,11 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
           _totalSets = null;
         }
       });
-      if (_isPlaying) _start();
+      if (_isPlaying) {
+        _start();
+      } else {
+        _autoStartIfNoVideo();
+      }
     } else {
       // Routine finished
       _completeRoutine();
@@ -182,7 +208,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
   }
 
   void _prev() {
-    _ticker?.cancel();
+    _stopTicker();
     if (_currentIndex > 0) {
       setState(() {
         _currentIndex -= 1;
@@ -219,7 +245,11 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
         }
       });
     }
-    if (_isPlaying) _start();
+    if (_isPlaying) {
+      _start();
+    } else {
+      _autoStartIfNoVideo();
+    }
   }
 
   Future<void> _completeRoutine() async {
@@ -253,7 +283,8 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
         _setsRemaining = null;
         _totalSets = null;
       }
-      _isPlaying = false;
+        _isPlaying = false;
+        _userPaused = false;
     });
   }
 

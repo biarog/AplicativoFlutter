@@ -3,11 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../models/routine.dart';
 import '../providers/completed_routines_provider.dart';
 import '../widgets/youtube_player.dart';
 import '../l10n/app_localizations.dart';
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 class RoutinePlayerScreen extends ConsumerStatefulWidget {
   final Routine routine;
@@ -31,6 +35,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeNotifications();
     final ex = widget.routine.exercises.isNotEmpty
         ? widget.routine.exercises[_currentIndex]
         : null;
@@ -46,6 +51,63 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
       _secondsRemaining = 0;
       _setsRemaining = null;
       _totalSets = null;
+    }
+  }
+
+  Future<void> _initializeNotifications() async {
+    const androidSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
+    const iosSettings = DarwinInitializationSettings();
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+    await flutterLocalNotificationsPlugin.initialize(initSettings);
+  }
+
+  Future<void> _updateNotification() async {
+    if (!_isPlaying) {
+      await flutterLocalNotificationsPlugin.cancel(0);
+      return;
+    }
+
+    final ex = widget.routine.exercises.isNotEmpty
+        ? widget.routine.exercises[_currentIndex]
+        : null;
+    
+    if (ex is TimedExercise) {
+      final minutes = _secondsRemaining ~/ 60;
+      final seconds = _secondsRemaining % 60;
+      final timeStr = '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      
+      const androidDetails = AndroidNotificationDetails(
+        'routine_timer',
+        'Routine Timer',
+        channelDescription: 'Shows remaining time for current exercise',
+        importance: Importance.low,
+        priority: Priority.low,
+        ongoing: true,
+        autoCancel: false,
+        playSound: false,
+        enableVibration: false,
+      );
+      
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: false,
+        presentBadge: false,
+        presentSound: false,
+      );
+      
+      const details = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+      
+      await flutterLocalNotificationsPlugin.show(
+        0,
+        ex.name,
+        'Tempo restante: $timeStr',
+        details,
+      );
     }
   }
 
@@ -67,6 +129,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
       _isPlaying = false;
       _awaitingVideo = false;
     });
+    _updateNotification();
   }
 
   void _startTimer() {
@@ -74,11 +137,13 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_secondsRemaining > 0) {
         setState(() => _secondsRemaining -= 1);
+        _updateNotification();
       } else {
         _playBellSound();
         _nextInternal();
       }
     });
+    _updateNotification();
   }
 
   Future<void> _playBellSound() async {
@@ -196,6 +261,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
   void dispose() {
     _ticker?.cancel();
     _audioPlayer.dispose();
+    flutterLocalNotificationsPlugin.cancel(0);
     super.dispose();
   }
 

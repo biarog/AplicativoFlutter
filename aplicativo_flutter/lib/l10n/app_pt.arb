@@ -133,14 +133,7 @@
   "min": "min",
   "setupAgenda": "Configurar Agenda",
   "organizeWeekWorkouts": "Organize seus treinos da semana",
-  "errorLoadingRoutines": "Erro ao carregar rotinas: {error}",
-  "@errorLoadingRoutines": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "errorLoadingRoutines": "Erro ao carregar rotinas",
   "account": "Conta",
   "configureSchedule": "Configurar Agenda",
   "selectRoutinesForEachDay": "Selecione rotinas para cada dia da semana",
@@ -162,5 +155,47 @@
   "thursday": "Quinta",
   "friday": "Sexta",
   "saturday": "Sábado",
-  "sunday": "Domingo"
+  "sunday": "Domingo",
+  "noWorkoutToday": "Nenhum treino para hoje",
+  "allRoutinesCompleted": "Todas as rotinas foram completadas!",
+  "routineCount": "{count} rotina",
+  "@routineCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "routineCountPlural": "{count} rotinas",
+  "@routineCountPlural": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exercisesAndDuration": "{exercises} exercícios · {minutes} min",
+  "@exercisesAndDuration": {
+    "placeholders": {
+      "exercises": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "errorLoadingCompletedRoutines": "Erro ao carregar rotinas completadas",
+  "errorLoadingSchedule": "Erro ao carregar agenda",
+  "errorLoadingScheduleWithMessage": "Erro ao carregar agenda: {error}",
+  "@errorLoadingScheduleWithMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingCalendar": "Erro ao carregar calendário",
+  "errorLoadingDetails": "Erro ao carregar detalhes",
+  "errorLoading": "Erro ao carregar"
 }

@@ -7,6 +7,7 @@ import '../providers/completed_routines_provider.dart';
 import '../screens/configure_schedule_screen.dart';
 import '../screens/routine_player_screen.dart';
 import '../models/routine.dart';
+import '../l10n/app_localizations.dart';
 
 class CalendarWidget extends ConsumerStatefulWidget {
   const CalendarWidget({super.key});
@@ -103,12 +104,14 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                 // Build content based on available routines
                 late String title;
                 late String info;
+                final l10n = AppLocalizations.of(context)!;
 
                 if (todayRoutinesNotCompleted.isEmpty) {
-                  title = 'Nenhum treino para hoje';
-                  info = 'Todas as rotinas foram completadas!';
+                  title = l10n.noWorkoutToday;
+                  info = l10n.allRoutinesCompleted;
                 } else {
-                  title = '${todayRoutinesNotCompleted.length} rotina${todayRoutinesNotCompleted.length > 1 ? 's' : ''}';
+                  final count = todayRoutinesNotCompleted.length;
+                  title = count > 1 ? l10n.routineCountPlural(count) : l10n.routineCount(count);
                   
                   final totalExercises = todayRoutinesNotCompleted.fold<int>(
                     0,
@@ -119,7 +122,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                     (sum, routine) => sum + (routine.totalDuration / 60).round(),
                   );
                   
-                  info = '$totalExercises exercícios · $totalDurationMinutes min';
+                  info = l10n.exercisesAndDuration(totalExercises, totalDurationMinutes);
                 }
 
                 return Card(
@@ -146,7 +149,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Treino de Hoje', style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
+                                  Text(l10n.todaysWorkout, style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 6),
                                   Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                                   const SizedBox(height: 6),
@@ -175,7 +178,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                                       children: [
                                         Text(routine.name, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
                                         const SizedBox(height: 4),
-                                        Text('$exerciseCount exercícios · $durationMinutes min', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
+                                        Text(l10n.exercisesAndDuration(exerciseCount, durationMinutes), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
                                       ],
                                     ),
                                   ),
@@ -210,14 +213,17 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                   child: CircularProgressIndicator(),
                 ),
               ),
-              error: (err, stack) => Card(
-                color: secondary.withAlpha((0.12 * 255).round()),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Text('Erro ao carregar rotinas completadas'),
-                ),
-              ),
+              error: (err, stack) {
+                final l10n = AppLocalizations.of(context)!;
+                return Card(
+                  color: secondary.withAlpha((0.12 * 255).round()),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Text(l10n.errorLoadingCompletedRoutines),
+                  ),
+                );
+              },
             );
           },
           loading: () => Card(
@@ -228,14 +234,17 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
               child: CircularProgressIndicator(),
             ),
           ),
-          error: (err, stack) => Card(
-            color: secondary.withAlpha((0.12 * 255).round()),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Text('Erro ao carregar rotinas'),
-            ),
-          ),
+          error: (err, stack) {
+            final l10n = AppLocalizations.of(context)!;
+            return Card(
+              color: secondary.withAlpha((0.12 * 255).round()),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Text(l10n.errorLoadingRoutines),
+              ),
+            );
+          },
         );
       },
       loading: () => const Card(
@@ -244,18 +253,22 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (err, stack) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Text('Erro ao carregar agenda: $err'),
-        ),
-      ),
+      error: (err, stack) {
+        final l10n = AppLocalizations.of(context)!;
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Text(l10n.errorLoadingScheduleWithMessage(err.toString())),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildCalendar(BuildContext context) {
     final headerStyle = Theme.of(context).textTheme.titleMedium;
-    final monthYear = DateFormat.yMMMM('pt_BR').format(_viewMonth);
+    final locale = Localizations.localeOf(context).toString();
+    final monthYear = DateFormat.yMMMM(locale).format(_viewMonth);
     final days = _generateMonthGrid(_viewMonth);
     
     // Watch completadas rotinas e schedule
@@ -386,21 +399,24 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
             const Center(child: CircularProgressIndicator()),
           ],
         ),
-        error: (err, stack) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
-                Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
-                IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Center(child: Text('Erro ao carregar agenda')),
-          ],
-        ),
+        error: (err, stack) {
+          final l10n = AppLocalizations.of(context)!;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
+                  Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
+                  IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Center(child: Text(l10n.errorLoadingSchedule)),
+            ],
+          );
+        },
       ),
       loading: () => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -417,21 +433,24 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           const Center(child: CircularProgressIndicator()),
         ],
       ),
-      error: (err, stack) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
-              Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
-              IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Center(child: Text('Erro ao carregar calendário')),
-        ],
-      ),
+      error: (err, stack) {
+        final l10n = AppLocalizations.of(context)!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left)),
+                Text(monthYear, style: headerStyle?.copyWith(fontWeight: FontWeight.w700)),
+                IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Center(child: Text(l10n.errorLoadingCalendar)),
+          ],
+        );
+      },
     );
   }
 
@@ -440,8 +459,10 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
 
     final completedRoutinesAsync = ref.watch(completedRoutinesProvider);
     final routinesAsync = ref.watch(userRoutinesProvider);
-    final dateLabel = DateFormat('d MMMM', 'pt_BR').format(_selectedDate!);
+    final locale = Localizations.localeOf(context).toString();
+    final dateLabel = DateFormat('d MMMM', locale).format(_selectedDate!);
     final dateString = DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day).toIso8601String();
+    final l10n = AppLocalizations.of(context)!;
 
     return Card(
       color: Theme.of(context).colorScheme.primary.withAlpha((0.06 * 255).round()),
@@ -476,7 +497,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                 if (completedRoutineIds.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.all(12.0),
-                    child: Text('Nenhum treino realizado neste dia', style: Theme.of(context).textTheme.bodyMedium),
+                    child: Text(l10n.noWorkoutThisDay, style: Theme.of(context).textTheme.bodyMedium),
                   );
                 }
 
@@ -494,18 +515,18 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                           child: ListTile(
                             leading: const Icon(Icons.check_circle, color: Colors.green),
                             title: Text(routine.name),
-                            subtitle: Text('${routine.exercises.length} exercícios · ${(routine.totalDuration / 60).round()} min'),
+                            subtitle: Text(l10n.exercisesAndDuration(routine.exercises.length, (routine.totalDuration / 60).round())),
                           ),
                         );
                       }).toList(),
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, _) => const Text('Erro ao carregar detalhes'),
+                  error: (err, _) => Text(l10n.errorLoadingDetails),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => const Text('Erro ao carregar'),
+              error: (err, _) => Text(l10n.errorLoading),
             )
           ],
         ),
@@ -514,6 +535,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
   }
 
   Widget _buildFooterCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       color: Theme.of(context).colorScheme.secondary,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -524,8 +546,8 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(8)),
           child: Icon(Icons.settings, color: Theme.of(context).colorScheme.inverseSurface),
         ),
-        title: Text('Configurar Agenda', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-        subtitle: Text('Organize seus treinos da semana', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        title: Text(l10n.configureSchedule, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        subtitle: Text(l10n.selectRoutinesForEachDay, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
         onTap: () {
           Navigator.push(
             context,

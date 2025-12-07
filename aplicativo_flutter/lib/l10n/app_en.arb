@@ -220,14 +220,7 @@
     "min": "min",
     "setupAgenda": "Setup Agenda",
     "organizeWeekWorkouts": "Organize your week workouts",
-    "errorLoadingRoutines": "Error loading routines: {error}",
-    "@errorLoadingRoutines": {
-      "placeholders": {
-        "error": {
-          "type": "String"
-        }
-      }
-    },
+    "errorLoadingRoutines": "Error loading routines",
     "account": "Account",
     "configureSchedule": "Configure Schedule",
     "selectRoutinesForEachDay": "Select routines for each day of the week",
@@ -249,5 +242,47 @@
     "thursday": "Thursday",
     "friday": "Friday",
     "saturday": "Saturday",
-    "sunday": "Sunday"
+    "sunday": "Sunday",
+    "noWorkoutToday": "No workout today",
+    "allRoutinesCompleted": "All routines completed!",
+    "routineCount": "{count} routine",
+    "@routineCount": {
+      "placeholders": {
+        "count": {
+          "type": "int"
+        }
+      }
+    },
+    "routineCountPlural": "{count} routines",
+    "@routineCountPlural": {
+      "placeholders": {
+        "count": {
+          "type": "int"
+        }
+      }
+    },
+    "exercisesAndDuration": "{exercises} exercises · {minutes} min",
+    "@exercisesAndDuration": {
+      "placeholders": {
+        "exercises": {
+          "type": "int"
+        },
+        "minutes": {
+          "type": "int"
+        }
+      }
+    },
+    "errorLoadingCompletedRoutines": "Error loading completed routines",
+    "errorLoadingSchedule": "Error loading schedule",
+    "errorLoadingScheduleWithMessage": "Error loading schedule: {error}",
+    "@errorLoadingScheduleWithMessage": {
+      "placeholders": {
+        "error": {
+          "type": "String"
+        }
+      }
+    },
+    "errorLoadingCalendar": "Error loading calendar",
+    "errorLoadingDetails": "Error loading details",
+    "errorLoading": "Error loading"
   }

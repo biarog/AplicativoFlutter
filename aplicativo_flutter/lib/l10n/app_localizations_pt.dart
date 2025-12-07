@@ -373,9 +373,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get organizeWeekWorkouts => 'Organize seus treinos da semana';
 
   @override
-  String errorLoadingRoutines(String error) {
-    return 'Erro ao carregar rotinas: $error';
-  }
+  String get errorLoadingRoutines => 'Erro ao carregar rotinas';
 
   @override
   String get account => 'Conta';
@@ -423,4 +421,42 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get sunday => 'Domingo';
+
+  @override
+  String get noWorkoutToday => 'Nenhum treino para hoje';
+
+  @override
+  String get allRoutinesCompleted => 'Todas as rotinas foram completadas!';
+
+  @override
+  String routineCount(int count) {
+    return '$count rotina';
+  }
+
+  @override
+  String routineCountPlural(int count) {
+    return '$count rotinas';
+  }
+
+  @override
+  String exercisesAndDuration(int exercises, int minutes) {
+    return '$exercises exercícios · $minutes min';
+  }
+
+  @override
+  String get errorLoadingCompletedRoutines => 'Erro ao carregar rotinas completadas';
+
+  @override
+  String errorLoadingScheduleWithMessage(String error) {
+    return 'Erro ao carregar agenda: $error';
+  }
+
+  @override
+  String get errorLoadingCalendar => 'Erro ao carregar calendário';
+
+  @override
+  String get errorLoadingDetails => 'Erro ao carregar detalhes';
+
+  @override
+  String get errorLoading => 'Erro ao carregar';
 }

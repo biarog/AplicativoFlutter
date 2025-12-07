@@ -776,8 +776,8 @@ abstract class AppLocalizations {
   /// No description provided for @errorLoadingRoutines.
   ///
   /// In en, this message translates to:
-  /// **'Error loading routines: {error}'**
-  String errorLoadingRoutines(String error);
+  /// **'Error loading routines'**
+  String get errorLoadingRoutines;
 
   /// No description provided for @account.
   ///
@@ -868,6 +868,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sunday'**
   String get sunday;
+
+  /// No description provided for @noWorkoutToday.
+  ///
+  /// In en, this message translates to:
+  /// **'No workout today'**
+  String get noWorkoutToday;
+
+  /// No description provided for @allRoutinesCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'All routines completed!'**
+  String get allRoutinesCompleted;
+
+  /// No description provided for @routineCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} routine'**
+  String routineCount(int count);
+
+  /// No description provided for @routineCountPlural.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} routines'**
+  String routineCountPlural(int count);
+
+  /// No description provided for @exercisesAndDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'{exercises} exercises · {minutes} min'**
+  String exercisesAndDuration(int exercises, int minutes);
+
+  /// No description provided for @errorLoadingCompletedRoutines.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading completed routines'**
+  String get errorLoadingCompletedRoutines;
+
+  /// No description provided for @errorLoadingScheduleWithMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading schedule: {error}'**
+  String errorLoadingScheduleWithMessage(String error);
+
+  /// No description provided for @errorLoadingCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading calendar'**
+  String get errorLoadingCalendar;
+
+  /// No description provided for @errorLoadingDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading details'**
+  String get errorLoadingDetails;
+
+  /// No description provided for @errorLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading'**
+  String get errorLoading;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

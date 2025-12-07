@@ -373,9 +373,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get organizeWeekWorkouts => '安排您的每周训练';
 
   @override
-  String errorLoadingRoutines(String error) {
-    return '加载例程时出错: $error';
-  }
+  String get errorLoadingRoutines => '加载例程时出错: null';
 
   @override
   String get account => '账户';
@@ -423,4 +421,42 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sunday => '星期日';
+
+  @override
+  String get noWorkoutToday => 'No workout today';
+
+  @override
+  String get allRoutinesCompleted => 'All routines completed!';
+
+  @override
+  String routineCount(int count) {
+    return '$count routine';
+  }
+
+  @override
+  String routineCountPlural(int count) {
+    return '$count routines';
+  }
+
+  @override
+  String exercisesAndDuration(int exercises, int minutes) {
+    return '$exercises exercises · $minutes min';
+  }
+
+  @override
+  String get errorLoadingCompletedRoutines => 'Error loading completed routines';
+
+  @override
+  String errorLoadingScheduleWithMessage(String error) {
+    return 'Error loading schedule: $error';
+  }
+
+  @override
+  String get errorLoadingCalendar => 'Error loading calendar';
+
+  @override
+  String get errorLoadingDetails => 'Error loading details';
+
+  @override
+  String get errorLoading => 'Error loading';
 }

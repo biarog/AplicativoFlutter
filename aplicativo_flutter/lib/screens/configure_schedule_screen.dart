@@ -115,7 +115,7 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
             children: [
               const Icon(Icons.error, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              Text(AppLocalizations.of(context)!.errorLoadingRoutines(err.toString())),
+              Text(AppLocalizations.of(context)!.errorLoadingRoutines),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),

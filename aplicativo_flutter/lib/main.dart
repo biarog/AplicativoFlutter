@@ -224,7 +224,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Center(
-        child: Text(AppLocalizations.of(context)!.errorLoadingRoutines(err.toString())),
+        child: Text(AppLocalizations.of(context)!.errorLoadingRoutines),
       ),
     );
   }

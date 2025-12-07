@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeSettings {
   final Color lightPrimary;
@@ -12,6 +13,7 @@ class ThemeSettings {
   final Color darkTerciary;
   final Color darkError;
   final bool isDark;
+  final String presetId;
 
   ThemeSettings({
     required this.lightPrimary,
@@ -23,6 +25,7 @@ class ThemeSettings {
     required this.darkTerciary,
     required this.darkError,
     this.isDark = false,
+    this.presetId = 'orange',
   });
 
   ThemeSettings copyWith({
@@ -35,6 +38,7 @@ class ThemeSettings {
     Color? darkTerciary,
     Color? darkError,
     bool? isDark,
+    String? presetId,
   }) {
     return ThemeSettings(
       lightPrimary: lightPrimary ?? this.lightPrimary,
@@ -46,6 +50,7 @@ class ThemeSettings {
       darkTerciary: darkTerciary ?? this.darkTerciary,
       darkError: darkError ?? this.darkError,
       isDark: isDark ?? this.isDark,
+      presetId: presetId ?? this.presetId,
     );
   }
 
@@ -157,9 +162,16 @@ const List<ThemePreset> kDefaultThemePresets = [
 ];
 
 class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
+  static const _prefsKeyIsDark = 'theme_is_dark';
+  static const _prefsKeyPreset = 'theme_preset_id';
+
+  bool _didLoad = false;
+
   @override
   ThemeSettings build() {
     final platformIsDark = ui.PlatformDispatcher.instance.platformBrightness == Brightness.dark;
+
+    _loadFromPrefs();
 
     return ThemeSettings(
       lightPrimary: Colors.orange,
@@ -171,16 +183,49 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       darkTerciary: Color.fromARGB(255, 248, 190, 125),
       darkError: Colors.red,
       isDark: platformIsDark,
+      presetId: 'orange',
     );
   }
-  
-  void setDark(bool v) => state = state.copyWith(isDark: v);
+
+  Future<void> _loadFromPrefs() async {
+    if (_didLoad) return;
+    _didLoad = true;
+
+    final prefs = await SharedPreferences.getInstance();
+    final storedPreset = prefs.getString(_prefsKeyPreset);
+    final storedIsDark = prefs.getBool(_prefsKeyIsDark);
+
+    if (storedPreset != null) {
+      _applyPreset(storedPreset);
+    }
+
+    if (storedIsDark != null) {
+      state = state.copyWith(isDark: storedIsDark);
+    }
+  }
+
+  Future<void> _persist({String? presetId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsKeyIsDark, state.isDark);
+    await prefs.setString(_prefsKeyPreset, presetId ?? state.presetId);
+  }
+
+  Future<void> setDark(bool v) async {
+    state = state.copyWith(isDark: v);
+    await _persist();
+  }
 
   // Presets helpers
   List<ThemePreset> get presets => List.unmodifiable(kDefaultThemePresets);
 
-  void applyPresetById(String id) {
+  Future<void> applyPresetById(String id) async {
     final preset = kDefaultThemePresets.firstWhere((p) => p.id == id, orElse: () => kDefaultThemePresets.first);
+    _applyPreset(preset.id);
+    await _persist(presetId: preset.id);
+  }
+
+  void _applyPreset(String presetId) {
+    final preset = kDefaultThemePresets.firstWhere((p) => p.id == presetId, orElse: () => kDefaultThemePresets.first);
     state = state.copyWith(
       lightPrimary: preset.lightPrimary,
       lightSecondary: preset.lightSecondary,
@@ -190,6 +235,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       darkSecondary: preset.darkSecondary,
       darkTerciary: preset.darkTerciary,
       darkError: preset.darkError,
+      presetId: preset.id,
     );
   }
 }

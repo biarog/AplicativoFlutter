@@ -247,7 +247,16 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(labelText: AppLocalizations.of(context)!.durationSeconds),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+          Container(
+            height: 3,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 12),
           TextField(
             controller: _youtubeLinkController,
             keyboardType: TextInputType.url,
@@ -299,7 +308,16 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+          Container(
+            height: 3,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 12),
           TextField(
             controller: _youtubeLinkController,
             keyboardType: TextInputType.url,
@@ -318,8 +336,17 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
           children: [
             ElevatedButton.icon(
               onPressed: _addExercise,
-              icon: const Icon(Icons.add),
-              label: Text(AppLocalizations.of(context)!.addExercise),
+              icon: Icon(
+                Icons.add, 
+                color: Theme.of(context).colorScheme.onTertiary
+              ),
+              label: Text(
+                AppLocalizations.of(context)!.addExercise,
+                style: TextStyle(color: Theme.of(context).colorScheme.onTertiary),
+              ),
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all(Theme.of(context).colorScheme.tertiary),
+              ),
             ),
             const SizedBox(width: 12),
             OutlinedButton(
@@ -334,7 +361,14 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                 ref.read(exerciseTypeProvider.notifier).set(ExerciseType.timed);
                 ref.read(useWeightProvider.notifier).set(false);
               },
-              child: Text(AppLocalizations.of(context)!.clear),
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all(Theme.of(context).colorScheme.inverseSurface),
+                side: WidgetStateProperty.all(BorderSide(color: Theme.of(context).colorScheme.error)),
+              ),
+              child: Text(
+                AppLocalizations.of(context)!.clear,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             ),
           ],
         ),
@@ -368,6 +402,15 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 24),
+          Container(
+            height: 3,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const SizedBox(height: 12),
           Expanded(
             child: SingleChildScrollView(
@@ -379,7 +422,16 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                   _buildExerciseForm(),
                   const SizedBox(height: 16),
                   const Divider(),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
+                  Container(
+                    height: 3,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   Text(AppLocalizations.of(context)!.exercises, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   if (exercises.isEmpty)
@@ -395,7 +447,7 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                         final l10n = AppLocalizations.of(context)!;
                         String subtitle;
                         if (e is TimedExercise) {
-                          subtitle = '${l10n.timed} — ${e.seconds}${l10n.secondsShort}';
+                          subtitle = '${l10n.timed} — ${l10n.secondsShort(e.seconds)}';
                         } else {
                           final ce = e as CountingExercise;
                           subtitle = ce.weight != null
@@ -404,7 +456,7 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                         }
 
                         if (e.youtubeUrl != null && e.youtubeUrl!.isNotEmpty) {
-                          subtitle = "$subtitle • Video: ${e.youtubeUrl}${e.youtubeStartSeconds != null ? ' @ ${e.youtubeStartSeconds}${l10n.secondsShort}' : ''}";
+                          subtitle = "$subtitle • Video: ${e.youtubeUrl}${e.youtubeStartSeconds != null ? ' @ ${l10n.secondsShort(e.youtubeStartSeconds!)}' : ''}";
                         }
 
                         return ListTile(

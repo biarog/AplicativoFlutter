@@ -126,6 +126,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                 }
 
                 return Card(
+                  margin: EdgeInsets.zero,
                   color: secondary.withAlpha((0.12 * 255).round()),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: Padding(
@@ -206,6 +207,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                 );
               },
               loading: () => Card(
+                margin: EdgeInsets.zero,
                 color: secondary.withAlpha((0.12 * 255).round()),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: const Padding(
@@ -216,6 +218,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
               error: (err, stack) {
                 final l10n = AppLocalizations.of(context)!;
                 return Card(
+                  margin: EdgeInsets.zero,
                   color: secondary.withAlpha((0.12 * 255).round()),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: Padding(
@@ -227,6 +230,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
             );
           },
           loading: () => Card(
+            margin: EdgeInsets.zero,
             color: secondary.withAlpha((0.12 * 255).round()),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: const Padding(
@@ -237,6 +241,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           error: (err, stack) {
             final l10n = AppLocalizations.of(context)!;
             return Card(
+              margin: EdgeInsets.zero,
               color: secondary.withAlpha((0.12 * 255).round()),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
@@ -248,6 +253,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
         );
       },
       loading: () => const Card(
+        margin: EdgeInsets.zero,
         child: Padding(
           padding: EdgeInsets.all(12.0),
           child: CircularProgressIndicator(),
@@ -256,6 +262,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
       error: (err, stack) {
         final l10n = AppLocalizations.of(context)!;
         return Card(
+          margin: EdgeInsets.zero,
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Text(l10n.errorLoadingScheduleWithMessage(err.toString())),
@@ -465,6 +472,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
     final l10n = AppLocalizations.of(context)!;
 
     return Card(
+      margin: EdgeInsets.zero,
       color: Theme.of(context).colorScheme.primary.withAlpha((0.06 * 255).round()),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -537,6 +545,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
   Widget _buildFooterCard(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Card(
+      margin: EdgeInsets.zero,
       color: Theme.of(context).colorScheme.secondary,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
@@ -573,7 +582,6 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
               _buildTopCard(context, ref),
               const SizedBox(height: 12),
               _buildCalendar(context),
-              const SizedBox(height: 12),
               _buildDayPanel(context),
               const SizedBox(height: 12),
               _buildFooterCard(context),

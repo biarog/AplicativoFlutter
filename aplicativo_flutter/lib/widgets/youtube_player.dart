@@ -48,6 +48,11 @@ class _YouTubePlayerWidgetState extends ConsumerState<YouTubePlayerWidget> {
 			}
 		};
 		_controller.addListener(_controllerListener!);
+		
+		// Pre-load video (cue) to improve loading time
+		if (_videoId != null && _videoId!.isNotEmpty) {
+			_controller.cue(_videoId!, startAt: widget.startAt.inSeconds);
+		}
 	}
 
 	@override
@@ -57,12 +62,10 @@ class _YouTubePlayerWidgetState extends ConsumerState<YouTubePlayerWidget> {
 		if (newId != _videoId) {
 			_videoId = newId;
 			if (_videoId != null && _videoId!.isNotEmpty) {
-				// use `cue` when not autoplaying so the video is prepared but not started
+				// Always use `cue` to pre-load video - autoplay will be controlled separately
+				_controller.cue(_videoId!, startAt: widget.startAt.inSeconds);
 				if (widget.autoPlay) {
-					_controller.load(_videoId!, startAt: widget.startAt.inSeconds);
 					_controller.play();
-				} else {
-					_controller.cue(_videoId!, startAt: widget.startAt.inSeconds);
 				}
 			}
 		}
@@ -71,14 +74,8 @@ class _YouTubePlayerWidgetState extends ConsumerState<YouTubePlayerWidget> {
 			_controller.seekTo(widget.startAt);
 		}
 
-		// handle autoplay prop changes: play/pause explicitly
-		if (oldWidget.autoPlay != widget.autoPlay) {
-			if (widget.autoPlay) {
-				_controller.play();
-			} else {
-				_controller.pause();
-			}
-		}
+		// Note: We removed autoplay control from didUpdateWidget
+		// Video now plays independently of timer state
 	}
 
 	@override

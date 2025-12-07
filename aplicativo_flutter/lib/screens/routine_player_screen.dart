@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../models/routine.dart';
 import '../providers/completed_routines_provider.dart';
@@ -25,7 +26,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
   Timer? _ticker;
   bool _isPlaying = false;
   bool _awaitingVideo = false;
-  bool _videoPlaying = false;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -55,24 +56,6 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
     if (ex is! TimedExercise) return; // only start for timed exercises
     if (_ticker != null) return; // already running
 
-    // If exercise has a YouTube video, either start immediately if it's already playing
-    // or wait for the player to begin playback (onPlaybackStateChanged) before starting timer.
-    if (ex.youtubeUrl != null && ex.youtubeUrl!.isNotEmpty) {
-      setState(() {
-        _isPlaying = true; // reflect play intent in UI
-      });
-
-      if (_videoPlaying) {
-        // video already playing -> start timer now
-        setState(() => _awaitingVideo = false);
-        _startTimer();
-      } else {
-        // video not yet playing -> wait for onPlay/onPlayback to trigger start
-        setState(() => _awaitingVideo = true);
-      }
-      return;
-    }
-
     setState(() => _isPlaying = true);
     _startTimer();
   }
@@ -92,9 +75,18 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
       if (_secondsRemaining > 0) {
         setState(() => _secondsRemaining -= 1);
       } else {
+        _playBellSound();
         _nextInternal();
       }
     });
+  }
+
+  Future<void> _playBellSound() async {
+    try {
+      await _audioPlayer.play(AssetSource('audio/sino.mp3'));
+    } catch (e) {
+      // Silently fail if audio doesn't play
+    }
   }
 
   void _nextInternal() {
@@ -203,6 +195,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
   @override
   void dispose() {
     _ticker?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -248,7 +241,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
                     child: YouTubePlayerWidget(
                       url: ex.youtubeUrl!,
                       startAt: Duration(seconds: ex.youtubeStartSeconds ?? 0),
-                      autoPlay: _isPlaying,
+                      autoPlay: false, // Video controls are independent of timer
                       onPlay: () {
                         if (!_awaitingVideo) return;
                         // start timer when video actually begins playback
@@ -258,11 +251,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
                         _startTimer();
                       },
                       onPlaybackStateChanged: (playing) {
-                        // keep track of current playback state so we can start immediately
-                        // if user presses start while video is already playing
-                        setState(() {
-                          _videoPlaying = playing;
-                        });
+                        // Video playback is now independent of timer state
                         if (_awaitingVideo && playing) {
                           setState(() => _awaitingVideo = false);
                           _startTimer();

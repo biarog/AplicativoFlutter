@@ -33,19 +33,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get language => 'Idioma';
 
   @override
-  String get sortRoutines => 'Ordenar Rotinas';
-
-  @override
-  String get sortNotImplemented => 'Ordenação não implementada';
-
-  @override
   String get deleteAllRoutines => 'Excluir todas as rotinas';
 
   @override
   String get removeAllRoutinesDesc => 'Remover todas as rotinas salvas do dispositivo e nuvem';
-
-  @override
-  String get notSignedIn => 'Não conectado';
 
   @override
   String get deleteAllRoutinesConfirm => 'Tem certeza de que deseja excluir todas as rotinas salvas? Isso não pode ser desfeito.';
@@ -65,23 +56,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get filter => 'Filtrar';
-
-  @override
-  String get filterNotImplemented => 'Filtro não implementado';
-
-  @override
   String get noRoutinesYet => 'Nenhuma rotina ainda. Toque em Criar para adicionar sua primeira rotina.';
-
-  @override
-  String exercisesCount(int count) {
-    return '$count exercícios';
-  }
-
-  @override
-  String duration(int seconds) {
-    return '~${seconds}s';
-  }
 
   @override
   String get play => 'Reproduzir';
@@ -140,11 +115,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get create => 'Criar';
 
   @override
-  String routineCompleted(String name) {
-    return 'Rotina \"$name\" concluída e marcada no calendário.';
-  }
-
-  @override
   String exerciseProgress(int current, int total) {
     return 'Exercício $current de $total';
   }
@@ -195,9 +165,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get changePasswordNotImplemented => 'Diálogo de alteração de senha ainda não implementado.';
-
-  @override
-  String get ok => 'OK';
 
   @override
   String get displayName => 'Nome de exibição';
@@ -269,6 +236,24 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get todaysWorkout => 'Treino de Hoje';
+
+  @override
+  String get name => 'Nome';
+
+  @override
+  String get nameHint => 'Nome completo (exibido publicamente)';
+
+  @override
+  String get confirmPassword => 'Confirmar Senha';
+
+  @override
+  String get pleaseConfirmPassword => 'Por favor, confirme sua senha';
+
+  @override
+  String get passwordsDoNotMatch => 'As senhas não coincidem';
+
+  @override
+  String get appCredits => 'Créditos do App';
 
   @override
   String get emailHint => 'voce@exemplo.com';
@@ -361,18 +346,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get noWorkoutThisDay => 'Nenhum treino realizado neste dia';
 
   @override
-  String get exercisesCount2 => 'exercícios';
-
-  @override
-  String get min => 'min';
-
-  @override
-  String get setupAgenda => 'Configurar Agenda';
-
-  @override
-  String get organizeWeekWorkouts => 'Organize seus treinos da semana';
-
-  @override
   String get errorLoadingRoutines => 'Erro ao carregar rotinas';
 
   @override
@@ -390,53 +363,10 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get done => 'Concluído';
-
-  @override
-  String get errorLoadingSchedule => 'Erro ao carregar agenda';
-
-  @override
-  String get back => 'Voltar';
-
-  @override
   String get loadingRoutines => 'Carregando rotinas...';
 
   @override
-  String get monday => 'Segunda';
-
-  @override
-  String get tuesday => 'Terça';
-
-  @override
-  String get wednesday => 'Quarta';
-
-  @override
-  String get thursday => 'Quinta';
-
-  @override
-  String get friday => 'Sexta';
-
-  @override
-  String get saturday => 'Sábado';
-
-  @override
-  String get sunday => 'Domingo';
-
-  @override
-  String get noWorkoutToday => 'Nenhum treino para hoje';
-
-  @override
   String get allRoutinesCompleted => 'Todas as rotinas foram completadas!';
-
-  @override
-  String routineCount(int count) {
-    return '$count rotina';
-  }
-
-  @override
-  String routineCountPlural(int count) {
-    return '$count rotinas';
-  }
 
   @override
   String exercisesAndDuration(int exercises, int minutes) {
@@ -447,16 +377,40 @@ class AppLocalizationsPt extends AppLocalizations {
   String get errorLoadingCompletedRoutines => 'Erro ao carregar rotinas completadas';
 
   @override
-  String errorLoadingScheduleWithMessage(String error) {
-    return 'Erro ao carregar agenda: $error';
-  }
-
-  @override
   String get errorLoadingCalendar => 'Erro ao carregar calendário';
 
   @override
-  String get errorLoadingDetails => 'Erro ao carregar detalhes';
+  String get routineTimer => 'Temporizador de Rotina';
 
   @override
-  String get errorLoading => 'Erro ao carregar';
+  String get routineTimerDesc => 'Mostra o tempo restante para o exercício atual';
+
+  @override
+  String timeRemaining(String time) {
+    return 'Tempo restante: $time';
+  }
+
+  @override
+  String get noRoutineSelected => 'Nenhuma rotina selecionada';
+
+  @override
+  String get credits => 'Créditos';
+
+  @override
+  String get developedBy => 'Desenvolvido por';
+
+  @override
+  String get githubUrl => 'GitHub';
+
+  @override
+  String get copyToClipboard => 'URL do GitHub copiado para a área de transferência!';
+
+  @override
+  String get thankYouMessage => 'Obrigado por usar nosso aplicativo!';
+
+  @override
+  String get fitnessGoalsMessage => 'Esperamos que ajude você a alcançar seus objetivos de fitness.';
+
+  @override
+  String get close => 'Fechar';
 }

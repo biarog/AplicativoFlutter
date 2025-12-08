@@ -33,19 +33,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get language => 'Idioma';
 
   @override
-  String get sortRoutines => 'Ordenar Rutinas';
-
-  @override
-  String get sortNotImplemented => 'Ordenar no implementado';
-
-  @override
   String get deleteAllRoutines => 'Eliminar todas las rutinas';
 
   @override
   String get removeAllRoutinesDesc => 'Eliminar todas las rutinas guardadas del dispositivo y la nube';
-
-  @override
-  String get notSignedIn => 'No has iniciado sesión';
 
   @override
   String get deleteAllRoutinesConfirm => '¿Estás seguro de que deseas eliminar todas las rutinas guardadas? Esto no se puede deshacer.';
@@ -65,23 +56,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get filter => 'Filtrar';
-
-  @override
-  String get filterNotImplemented => 'Filtro no implementado';
-
-  @override
   String get noRoutinesYet => 'Aún no hay rutinas. Toca Crear para agregar tu primera rutina.';
-
-  @override
-  String exercisesCount(int count) {
-    return '$count ejercicios';
-  }
-
-  @override
-  String duration(int seconds) {
-    return '~${seconds}s';
-  }
 
   @override
   String get play => 'Reproducir';
@@ -140,11 +115,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get create => 'Crear';
 
   @override
-  String routineCompleted(String name) {
-    return 'Rutina \"$name\" completada y marcada en el calendario.';
-  }
-
-  @override
   String exerciseProgress(int current, int total) {
     return 'Ejercicio $current de $total';
   }
@@ -195,9 +165,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get changePasswordNotImplemented => 'Diálogo de cambio de contraseña aún no implementado.';
-
-  @override
-  String get ok => 'OK';
 
   @override
   String get displayName => 'Nombre para mostrar';
@@ -269,6 +236,24 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get todaysWorkout => 'Entrenamiento de Hoy';
+
+  @override
+  String get name => 'Nombre';
+
+  @override
+  String get nameHint => 'Nombre completo (mostrado públicamente)';
+
+  @override
+  String get confirmPassword => 'Confirmar Contraseña';
+
+  @override
+  String get pleaseConfirmPassword => 'Por favor, confirma tu contraseña';
+
+  @override
+  String get passwordsDoNotMatch => 'Las contraseñas no coinciden';
+
+  @override
+  String get appCredits => 'Créditos de la App';
 
   @override
   String get emailHint => 'tu@ejemplo.com';
@@ -361,18 +346,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noWorkoutThisDay => 'No se realizó entrenamiento este día';
 
   @override
-  String get exercisesCount2 => 'ejercicios';
-
-  @override
-  String get min => 'min';
-
-  @override
-  String get setupAgenda => 'Configurar Agenda';
-
-  @override
-  String get organizeWeekWorkouts => 'Organiza tus entrenamientos de la semana';
-
-  @override
   String get errorLoadingRoutines => 'Error al cargar rutinas: null';
 
   @override
@@ -390,73 +363,54 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get done => 'Hecho';
-
-  @override
-  String get errorLoadingSchedule => 'Error al cargar la agenda';
-
-  @override
-  String get back => 'Volver';
-
-  @override
   String get loadingRoutines => 'Cargando rutinas...';
 
   @override
-  String get monday => 'Lunes';
-
-  @override
-  String get tuesday => 'Martes';
-
-  @override
-  String get wednesday => 'Miércoles';
-
-  @override
-  String get thursday => 'Jueves';
-
-  @override
-  String get friday => 'Viernes';
-
-  @override
-  String get saturday => 'Sábado';
-
-  @override
-  String get sunday => 'Domingo';
-
-  @override
-  String get noWorkoutToday => 'No workout today';
-
-  @override
-  String get allRoutinesCompleted => 'All routines completed!';
-
-  @override
-  String routineCount(int count) {
-    return '$count routine';
-  }
-
-  @override
-  String routineCountPlural(int count) {
-    return '$count routines';
-  }
+  String get allRoutinesCompleted => '¡Todas las rutinas completadas!';
 
   @override
   String exercisesAndDuration(int exercises, int minutes) {
-    return '$exercises exercises · $minutes min';
+    return '$exercises ejercicios · $minutes min';
   }
 
   @override
-  String get errorLoadingCompletedRoutines => 'Error loading completed routines';
+  String get errorLoadingCompletedRoutines => 'Error al cargar rutinas completadas';
 
   @override
-  String errorLoadingScheduleWithMessage(String error) {
-    return 'Error loading schedule: $error';
+  String get errorLoadingCalendar => 'Error al cargar calendario';
+
+  @override
+  String get routineTimer => 'Temporizador de Rutina';
+
+  @override
+  String get routineTimerDesc => 'Muestra el tiempo restante para el ejercicio actual';
+
+  @override
+  String timeRemaining(String time) {
+    return 'Tiempo restante: $time';
   }
 
   @override
-  String get errorLoadingCalendar => 'Error loading calendar';
+  String get noRoutineSelected => 'Ninguna rutina seleccionada';
 
   @override
-  String get errorLoadingDetails => 'Error loading details';
+  String get credits => 'Créditos';
 
   @override
-  String get errorLoading => 'Error loading';
+  String get developedBy => 'Desarrollado por';
+
+  @override
+  String get githubUrl => 'GitHub';
+
+  @override
+  String get copyToClipboard => '¡URL de GitHub copiada al portapapeles!';
+
+  @override
+  String get thankYouMessage => '¡Gracias por usar nuestra aplicación!';
+
+  @override
+  String get fitnessGoalsMessage => 'Esperamos que te ayude a alcanzar tus objetivos de fitness.';
+
+  @override
+  String get close => 'Cerrar';
 }

@@ -1,0 +1,22 @@
+{
+  "es": [
+    "allRoutinesCompleted",
+    "exercisesAndDuration",
+    "errorLoadingCompletedRoutines",
+    "errorLoadingCalendar"
+  ],
+
+  "fr": [
+    "allRoutinesCompleted",
+    "exercisesAndDuration",
+    "errorLoadingCompletedRoutines",
+    "errorLoadingCalendar"
+  ],
+
+  "zh": [
+    "allRoutinesCompleted",
+    "exercisesAndDuration",
+    "errorLoadingCompletedRoutines",
+    "errorLoadingCalendar"
+  ]
+}

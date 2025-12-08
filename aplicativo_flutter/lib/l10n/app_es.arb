@@ -9,21 +9,14 @@
   "darkMode": "Modo oscuro",
   "themeColor": "Color del tema",
   "language": "Idioma",
-  "sortRoutines": "Ordenar Rutinas",
-  "sortNotImplemented": "Ordenar no implementado",
   "deleteAllRoutines": "Eliminar todas las rutinas",
   "removeAllRoutinesDesc": "Eliminar todas las rutinas guardadas del dispositivo y la nube",
-  "notSignedIn": "No has iniciado sesión",
   "deleteAllRoutinesConfirm": "¿Estás seguro de que deseas eliminar todas las rutinas guardadas? Esto no se puede deshacer.",
   "cancel": "Cancelar",
   "delete": "Eliminar",
   "allRoutinesDeleted": "Todas las rutinas eliminadas",
   "failedToDeleteRoutines": "Error al eliminar rutinas: {error}",
-  "filter": "Filtrar",
-  "filterNotImplemented": "Filtro no implementado",
   "noRoutinesYet": "Aún no hay rutinas. Toca Crear para agregar tu primera rutina.",
-  "exercisesCount": "{count} ejercicios",
-  "duration": "~{seconds}s",
   "play": "Reproducir",
   "deleteRoutine": "Eliminar rutina",
   "deleteRoutineConfirm": "¿Eliminar \"{name}\"? Esto la eliminará de tu dispositivo y la nube.",
@@ -40,7 +33,6 @@
   "routines": "Rutinas",
   "calendar": "Calendario",
   "create": "Crear",
-  "routineCompleted": "Rutina \"{name}\" completada y marcada en el calendario.",
   "exerciseProgress": "Ejercicio {current} de {total}",
   "setsLeft": "Series restantes",
   "secondsShort": "{seconds}s",
@@ -67,7 +59,6 @@
   "nameUpdated": "Nombre actualizado",
   "changePassword": "Cambiar contraseña",
   "changePasswordNotImplemented": "Diálogo de cambio de contraseña aún no implementado.",
-  "ok": "OK",
   "displayName": "Nombre para mostrar",
   "pleaseEnterDisplayName": "Por favor, ingresa un nombre para mostrar",
   "save": "Guardar",
@@ -91,6 +82,12 @@
   "noExercisesAdded": "Aún no se han agregado ejercicios",
   "agenda": "Agenda",
   "todaysWorkout": "Entrenamiento de Hoy",
+  "name": "Nombre",
+  "nameHint": "Nombre completo (mostrado públicamente)",
+  "confirmPassword": "Confirmar Contraseña",
+  "pleaseConfirmPassword": "Por favor, confirma tu contraseña",
+  "passwordsDoNotMatch": "Las contraseñas no coinciden",
+  "appCredits": "Créditos de la App",
   "emailHint": "tu@ejemplo.com",
   "pleaseEnterEmail": "Por favor, ingresa tu correo electrónico",
   "pleaseEnterValidEmail": "Por favor, ingresa un correo electrónico válido",
@@ -129,10 +126,6 @@
     "weightKg": "Peso (kg)",
     "invalidYoutubeUrl": "URL de YouTube inválida",
     "noWorkoutThisDay": "No se realizó entrenamiento este día",
-    "exercisesCount2": "ejercicios",
-  "min": "min",
-  "setupAgenda": "Configurar Agenda",
-  "organizeWeekWorkouts": "Organiza tus entrenamientos de la semana",
   "errorLoadingRoutines": "Error al cargar rutinas: {error}",
   "@errorLoadingRoutines": {
     "placeholders": {
@@ -152,15 +145,37 @@
       }
     }
   },
-  "done": "Hecho",
-  "errorLoadingSchedule": "Error al cargar la agenda",
-  "back": "Volver",
   "loadingRoutines": "Cargando rutinas...",
-  "monday": "Lunes",
-  "tuesday": "Martes",
-  "wednesday": "Miércoles",
-  "thursday": "Jueves",
-  "friday": "Viernes",
-  "saturday": "Sábado",
-  "sunday": "Domingo"
+  "routineTimer": "Temporizador de Rutina",
+  "routineTimerDesc": "Muestra el tiempo restante para el ejercicio actual",
+  "timeRemaining": "Tiempo restante: {time}",
+  "@timeRemaining": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "noRoutineSelected": "Ninguna rutina seleccionada",
+  "allRoutinesCompleted": "¡Todas las rutinas completadas!",
+  "exercisesAndDuration": "{exercises} ejercicios · {minutes} min",
+  "@exercisesAndDuration": {
+    "placeholders": {
+      "exercises": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "errorLoadingCompletedRoutines": "Error al cargar rutinas completadas",
+  "errorLoadingCalendar": "Error al cargar calendario",
+  "credits": "Créditos",
+  "developedBy": "Desarrollado por",
+  "githubUrl": "GitHub",
+  "copyToClipboard": "¡URL de GitHub copiada al portapapeles!",
+  "thankYouMessage": "¡Gracias por usar nuestra aplicación!",
+  "fitnessGoalsMessage": "Esperamos que te ayude a alcanzar tus objetivos de fitness.",
+  "close": "Cerrar"
 }

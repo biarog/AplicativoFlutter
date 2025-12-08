@@ -149,18 +149,6 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get language;
 
-  /// No description provided for @sortRoutines.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort Routines'**
-  String get sortRoutines;
-
-  /// No description provided for @sortNotImplemented.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort not implemented'**
-  String get sortNotImplemented;
-
   /// No description provided for @deleteAllRoutines.
   ///
   /// In en, this message translates to:
@@ -172,12 +160,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove all saved routines from device and cloud'**
   String get removeAllRoutinesDesc;
-
-  /// No description provided for @notSignedIn.
-  ///
-  /// In en, this message translates to:
-  /// **'Not signed in'**
-  String get notSignedIn;
 
   /// No description provided for @deleteAllRoutinesConfirm.
   ///
@@ -209,35 +191,11 @@ abstract class AppLocalizations {
   /// **'Failed to delete routines: {error}'**
   String failedToDeleteRoutines(String error);
 
-  /// No description provided for @filter.
-  ///
-  /// In en, this message translates to:
-  /// **'Filter'**
-  String get filter;
-
-  /// No description provided for @filterNotImplemented.
-  ///
-  /// In en, this message translates to:
-  /// **'Filter not implemented'**
-  String get filterNotImplemented;
-
   /// No description provided for @noRoutinesYet.
   ///
   /// In en, this message translates to:
   /// **'No routines yet. Tap Create to add your first routine.'**
   String get noRoutinesYet;
-
-  /// No description provided for @exercisesCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} exercises'**
-  String exercisesCount(int count);
-
-  /// No description provided for @duration.
-  ///
-  /// In en, this message translates to:
-  /// **'~{seconds}s'**
-  String duration(int seconds);
 
   /// No description provided for @play.
   ///
@@ -335,12 +293,6 @@ abstract class AppLocalizations {
   /// **'Create'**
   String get create;
 
-  /// No description provided for @routineCompleted.
-  ///
-  /// In en, this message translates to:
-  /// **'Routine \"{name}\" completed and marked on calendar.'**
-  String routineCompleted(String name);
-
   /// No description provided for @exerciseProgress.
   ///
   /// In en, this message translates to:
@@ -424,12 +376,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password change dialog not implemented yet.'**
   String get changePasswordNotImplemented;
-
-  /// No description provided for @ok.
-  ///
-  /// In en, this message translates to:
-  /// **'OK'**
-  String get ok;
 
   /// No description provided for @displayName.
   ///
@@ -568,6 +514,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Today\'s workout'**
   String get todaysWorkout;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @nameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name (displayed publicly)'**
+  String get nameHint;
+
+  /// No description provided for @confirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Password'**
+  String get confirmPassword;
+
+  /// No description provided for @pleaseConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm your password'**
+  String get pleaseConfirmPassword;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsDoNotMatch;
+
+  /// No description provided for @appCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'App Credits'**
+  String get appCredits;
 
   /// No description provided for @emailHint.
   ///
@@ -749,30 +731,6 @@ abstract class AppLocalizations {
   /// **'No workout performed on this day'**
   String get noWorkoutThisDay;
 
-  /// No description provided for @exercisesCount2.
-  ///
-  /// In en, this message translates to:
-  /// **'exercises'**
-  String get exercisesCount2;
-
-  /// No description provided for @min.
-  ///
-  /// In en, this message translates to:
-  /// **'min'**
-  String get min;
-
-  /// No description provided for @setupAgenda.
-  ///
-  /// In en, this message translates to:
-  /// **'Setup Agenda'**
-  String get setupAgenda;
-
-  /// No description provided for @organizeWeekWorkouts.
-  ///
-  /// In en, this message translates to:
-  /// **'Organize your week workouts'**
-  String get organizeWeekWorkouts;
-
   /// No description provided for @errorLoadingRoutines.
   ///
   /// In en, this message translates to:
@@ -803,95 +761,17 @@ abstract class AppLocalizations {
   /// **'Total scheduled routines: {count}'**
   String totalScheduledRoutines(int count);
 
-  /// No description provided for @done.
-  ///
-  /// In en, this message translates to:
-  /// **'Done'**
-  String get done;
-
-  /// No description provided for @errorLoadingSchedule.
-  ///
-  /// In en, this message translates to:
-  /// **'Error loading schedule'**
-  String get errorLoadingSchedule;
-
-  /// No description provided for @back.
-  ///
-  /// In en, this message translates to:
-  /// **'Back'**
-  String get back;
-
   /// No description provided for @loadingRoutines.
   ///
   /// In en, this message translates to:
   /// **'Loading routines...'**
   String get loadingRoutines;
 
-  /// No description provided for @monday.
-  ///
-  /// In en, this message translates to:
-  /// **'Monday'**
-  String get monday;
-
-  /// No description provided for @tuesday.
-  ///
-  /// In en, this message translates to:
-  /// **'Tuesday'**
-  String get tuesday;
-
-  /// No description provided for @wednesday.
-  ///
-  /// In en, this message translates to:
-  /// **'Wednesday'**
-  String get wednesday;
-
-  /// No description provided for @thursday.
-  ///
-  /// In en, this message translates to:
-  /// **'Thursday'**
-  String get thursday;
-
-  /// No description provided for @friday.
-  ///
-  /// In en, this message translates to:
-  /// **'Friday'**
-  String get friday;
-
-  /// No description provided for @saturday.
-  ///
-  /// In en, this message translates to:
-  /// **'Saturday'**
-  String get saturday;
-
-  /// No description provided for @sunday.
-  ///
-  /// In en, this message translates to:
-  /// **'Sunday'**
-  String get sunday;
-
-  /// No description provided for @noWorkoutToday.
-  ///
-  /// In en, this message translates to:
-  /// **'No workout today'**
-  String get noWorkoutToday;
-
   /// No description provided for @allRoutinesCompleted.
   ///
   /// In en, this message translates to:
   /// **'All routines completed!'**
   String get allRoutinesCompleted;
-
-  /// No description provided for @routineCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} routine'**
-  String routineCount(int count);
-
-  /// No description provided for @routineCountPlural.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} routines'**
-  String routineCountPlural(int count);
 
   /// No description provided for @exercisesAndDuration.
   ///
@@ -905,29 +785,77 @@ abstract class AppLocalizations {
   /// **'Error loading completed routines'**
   String get errorLoadingCompletedRoutines;
 
-  /// No description provided for @errorLoadingScheduleWithMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Error loading schedule: {error}'**
-  String errorLoadingScheduleWithMessage(String error);
-
   /// No description provided for @errorLoadingCalendar.
   ///
   /// In en, this message translates to:
   /// **'Error loading calendar'**
   String get errorLoadingCalendar;
 
-  /// No description provided for @errorLoadingDetails.
+  /// No description provided for @routineTimer.
   ///
   /// In en, this message translates to:
-  /// **'Error loading details'**
-  String get errorLoadingDetails;
+  /// **'Routine Timer'**
+  String get routineTimer;
 
-  /// No description provided for @errorLoading.
+  /// No description provided for @routineTimerDesc.
   ///
   /// In en, this message translates to:
-  /// **'Error loading'**
-  String get errorLoading;
+  /// **'Shows remaining time for current exercise'**
+  String get routineTimerDesc;
+
+  /// No description provided for @timeRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Time remaining: {time}'**
+  String timeRemaining(String time);
+
+  /// No description provided for @noRoutineSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No routine selected'**
+  String get noRoutineSelected;
+
+  /// No description provided for @credits.
+  ///
+  /// In en, this message translates to:
+  /// **'Credits'**
+  String get credits;
+
+  /// No description provided for @developedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Developed by'**
+  String get developedBy;
+
+  /// No description provided for @githubUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub'**
+  String get githubUrl;
+
+  /// No description provided for @copyToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub URL copied to clipboard!'**
+  String get copyToClipboard;
+
+  /// No description provided for @thankYouMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for using our app!'**
+  String get thankYouMessage;
+
+  /// No description provided for @fitnessGoalsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We hope it helps you achieve your fitness goals.'**
+  String get fitnessGoalsMessage;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

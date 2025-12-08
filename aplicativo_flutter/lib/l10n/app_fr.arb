@@ -9,21 +9,14 @@
   "darkMode": "Mode sombre",
   "themeColor": "Couleur du thème",
   "language": "Langue",
-  "sortRoutines": "Trier les Routines",
-  "sortNotImplemented": "Tri non implémenté",
   "deleteAllRoutines": "Supprimer toutes les routines",
   "removeAllRoutinesDesc": "Supprimer toutes les routines enregistrées de l'appareil et du cloud",
-  "notSignedIn": "Non connecté",
   "deleteAllRoutinesConfirm": "Êtes-vous sûr de vouloir supprimer toutes les routines enregistrées? Cela ne peut pas être annulé.",
   "cancel": "Annuler",
   "delete": "Supprimer",
   "allRoutinesDeleted": "Toutes les routines supprimées",
   "failedToDeleteRoutines": "Échec de la suppression des routines: {error}",
-  "filter": "Filtrer",
-  "filterNotImplemented": "Filtre non implémenté",
   "noRoutinesYet": "Pas encore de routines. Appuyez sur Créer pour ajouter votre première routine.",
-  "exercisesCount": "{count} exercices",
-  "duration": "~{seconds}s",
   "play": "Lire",
   "deleteRoutine": "Supprimer la routine",
   "deleteRoutineConfirm": "Supprimer \"{name}\"? Cela la supprimera de votre appareil et du cloud.",
@@ -40,7 +33,6 @@
   "routines": "Routines",
   "calendar": "Calendrier",
   "create": "Créer",
-  "routineCompleted": "Routine \"{name}\" terminée et marquée dans le calendrier.",
   "exerciseProgress": "Exercice {current} sur {total}",
   "setsLeft": "Séries restantes",
   "secondsShort": "{seconds}s",
@@ -67,7 +59,6 @@
   "nameUpdated": "Nom mis à jour",
   "changePassword": "Changer le mot de passe",
   "changePasswordNotImplemented": "Dialogue de changement de mot de passe pas encore implémenté.",
-  "ok": "OK",
   "displayName": "Nom d'affichage",
   "pleaseEnterDisplayName": "Veuillez entrer un nom d'affichage",
   "save": "Enregistrer",
@@ -91,6 +82,12 @@
   "noExercisesAdded": "Aucun exercice ajouté pour le moment",
   "agenda": "Agenda",
   "todaysWorkout": "Entraînement d'Aujourd'hui",
+  "name": "Nom",
+  "nameHint": "Nom complet (affiché publiquement)",
+  "confirmPassword": "Confirmer le Mot de Passe",
+  "pleaseConfirmPassword": "Veuillez confirmer votre mot de passe",
+  "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+  "appCredits": "Crédits de l'App",
   "emailHint": "vous@exemple.com",
   "pleaseEnterEmail": "Veuillez entrer votre e-mail",
   "pleaseEnterValidEmail": "Veuillez entrer un e-mail valide",
@@ -129,10 +126,6 @@
     "weightKg": "Poids (kg)",
     "invalidYoutubeUrl": "URL YouTube invalide",
     "noWorkoutThisDay": "Aucun entraînement effectué ce jour",
-    "exercisesCount2": "exercices",
-    "min": "min",
-    "setupAgenda": "Configurer l'Agenda",
-    "organizeWeekWorkouts": "Organisez vos entraînements de la semaine",
     "errorLoadingRoutines": "Erreur lors du chargement des routines: {error}",
     "@errorLoadingRoutines": {
       "placeholders": {
@@ -152,15 +145,37 @@
         }
       }
     },
-    "done": "Terminé",
-    "errorLoadingSchedule": "Erreur lors du chargement de l'agenda",
-    "back": "Retour",
     "loadingRoutines": "Chargement des routines...",
-    "monday": "Lundi",
-    "tuesday": "Mardi",
-    "wednesday": "Mercredi",
-    "thursday": "Jeudi",
-    "friday": "Vendredi",
-    "saturday": "Samedi",
-    "sunday": "Dimanche"
+    "routineTimer": "Minuterie de Routine",
+    "routineTimerDesc": "Affiche le temps restant pour l'exercice actuel",
+    "timeRemaining": "Temps restant : {time}",
+    "@timeRemaining": {
+      "placeholders": {
+        "time": {
+          "type": "String"
+        }
+      }
+    },
+    "noRoutineSelected": "Aucune routine sélectionnée",
+    "allRoutinesCompleted": "Toutes les routines sont terminées!",
+    "exercisesAndDuration": "{exercises} exercices · {minutes} min",
+    "@exercisesAndDuration": {
+      "placeholders": {
+        "exercises": {
+          "type": "int"
+        },
+        "minutes": {
+          "type": "int"
+        }
+      }
+    },
+    "errorLoadingCompletedRoutines": "Erreur lors du chargement des routines terminées",
+    "errorLoadingCalendar": "Erreur lors du chargement du calendrier",
+    "credits": "Crédits",
+    "developedBy": "Développé par",
+    "githubUrl": "GitHub",
+    "copyToClipboard": "URL GitHub copiée dans le presse-papiers!",
+    "thankYouMessage": "Merci d'utiliser notre application!",
+    "fitnessGoalsMessage": "Nous espérons qu'elle vous aidera à atteindre vos objectifs de fitness.",
+    "close": "Fermer"
   }

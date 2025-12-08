@@ -1,34 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../l10n/app_localizations.dart';
 
 class CreditsDialog extends StatelessWidget {
   const CreditsDialog({super.key});
 
-  void _copyToClipboard(BuildContext context, String text) {
+  void _copyToClipboard(BuildContext context, String text, String successMessage) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('GitHub URL copied to clipboard!'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(successMessage),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return AlertDialog(
-      title: const Text(
-        'Credits',
+      title: Text(
+        l10n.credits,
         textAlign: TextAlign.center,
-        style: TextStyle(fontWeight: FontWeight.bold),
+        style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Developed by',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            Text(
+              l10n.developedBy,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 16),
             
@@ -37,6 +40,7 @@ class CreditsDialog extends StatelessWidget {
               context,
               name: 'Beatriz Rogers Tripoli Barbosa',
               githubUrl: 'https://github.com/biarog',
+              l10n: l10n,
             ),
             const SizedBox(height: 12),
             
@@ -45,26 +49,27 @@ class CreditsDialog extends StatelessWidget {
               context,
               name: 'Matteo Cileneo Savan',
               githubUrl: 'https://github.com/matteosavan',
+              l10n: l10n,
             ),
             
             const SizedBox(height: 24),
             const Divider(),
             const SizedBox(height: 16),
             
-            const Text(
-              'Thank you for using our app!',
+            Text(
+              l10n.thankYouMessage,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 fontStyle: FontStyle.italic,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'We hope it helps you achieve your fitness goals.',
+            Text(
+              l10n.fitnessGoalsMessage,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14),
+              style: const TextStyle(fontSize: 14),
             ),
           ],
         ),
@@ -72,7 +77,7 @@ class CreditsDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
+          child: Text(l10n.close),
         ),
       ],
     );
@@ -82,6 +87,7 @@ class CreditsDialog extends StatelessWidget {
     BuildContext context, {
     required String name,
     required String githubUrl,
+    required AppLocalizations l10n,
   }) {
     return Card(
       elevation: 2,
@@ -98,7 +104,7 @@ class CreditsDialog extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             InkWell(
-              onTap: () => _copyToClipboard(context, githubUrl),
+              onTap: () => _copyToClipboard(context, githubUrl, l10n.copyToClipboard),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -117,7 +123,7 @@ class CreditsDialog extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'GitHub',
+                      l10n.githubUrl,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w500,

@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../l10n/app_localizations.dart';
 
 import '../models/routine.dart';
 import '../providers/completed_routines_provider.dart';
 import '../widgets/youtube_player.dart';
-import '../l10n/app_localizations.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -83,10 +83,11 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
       final seconds = _secondsRemaining % 60;
       final timeStr = '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
       
-      const androidDetails = AndroidNotificationDetails(
+      final l10n = AppLocalizations.of(context)!;
+      final androidDetails = AndroidNotificationDetails(
         'routine_timer',
-        'Routine Timer',
-        channelDescription: 'Shows remaining time for current exercise',
+        l10n.routineTimer,
+        channelDescription: l10n.routineTimerDesc,
         importance: Importance.low,
         priority: Priority.low,
         ongoing: true,
@@ -101,7 +102,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
         presentSound: false,
       );
       
-      const details = NotificationDetails(
+      final details = NotificationDetails(
         android: androidDetails,
         iOS: iosDetails,
       );
@@ -109,7 +110,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
       await flutterLocalNotificationsPlugin.show(
         0,
         ex.name,
-        'Tempo restante: $timeStr',
+        l10n.timeRemaining(timeStr),
         details,
       );
     }

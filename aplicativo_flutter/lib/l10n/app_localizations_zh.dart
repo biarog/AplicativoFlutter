@@ -33,19 +33,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get language => '语言';
 
   @override
-  String get sortRoutines => '排序计划';
-
-  @override
-  String get sortNotImplemented => '排序未实现';
-
-  @override
   String get deleteAllRoutines => '删除所有计划';
 
   @override
   String get removeAllRoutinesDesc => '从设备和云端删除所有已保存的计划';
-
-  @override
-  String get notSignedIn => '未登录';
 
   @override
   String get deleteAllRoutinesConfirm => '您确定要删除所有已保存的计划吗？此操作无法撤消。';
@@ -65,23 +56,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get filter => '筛选';
-
-  @override
-  String get filterNotImplemented => '筛选未实现';
-
-  @override
   String get noRoutinesYet => '还没有计划。点击创建添加您的第一个计划。';
-
-  @override
-  String exercisesCount(int count) {
-    return '$count 个练习';
-  }
-
-  @override
-  String duration(int seconds) {
-    return '~$seconds秒';
-  }
 
   @override
   String get play => '播放';
@@ -140,11 +115,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get create => '创建';
 
   @override
-  String routineCompleted(String name) {
-    return '计划\"$name\"已完成并标记在日历上。';
-  }
-
-  @override
   String exerciseProgress(int current, int total) {
     return '练习 $current / $total';
   }
@@ -195,9 +165,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get changePasswordNotImplemented => '密码更改对话框尚未实现。';
-
-  @override
-  String get ok => '确定';
 
   @override
   String get displayName => '显示名称';
@@ -269,6 +236,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get todaysWorkout => '今日训练';
+
+  @override
+  String get name => '姓名';
+
+  @override
+  String get nameHint => '全名（公开显示）';
+
+  @override
+  String get confirmPassword => '确认密码';
+
+  @override
+  String get pleaseConfirmPassword => '请确认您的密码';
+
+  @override
+  String get passwordsDoNotMatch => '密码不匹配';
+
+  @override
+  String get appCredits => '应用程序制作人员';
 
   @override
   String get emailHint => '你@例子.com';
@@ -361,18 +346,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noWorkoutThisDay => '此日期没有进行训练';
 
   @override
-  String get exercisesCount2 => '个练习';
-
-  @override
-  String get min => '分钟';
-
-  @override
-  String get setupAgenda => '设置日程';
-
-  @override
-  String get organizeWeekWorkouts => '安排您的每周训练';
-
-  @override
   String get errorLoadingRoutines => '加载例程时出错: null';
 
   @override
@@ -390,73 +363,54 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get done => '完成';
-
-  @override
-  String get errorLoadingSchedule => '加载日程时出错';
-
-  @override
-  String get back => '返回';
-
-  @override
   String get loadingRoutines => '正在加载例程...';
 
   @override
-  String get monday => '星期一';
-
-  @override
-  String get tuesday => '星期二';
-
-  @override
-  String get wednesday => '星期三';
-
-  @override
-  String get thursday => '星期四';
-
-  @override
-  String get friday => '星期五';
-
-  @override
-  String get saturday => '星期六';
-
-  @override
-  String get sunday => '星期日';
-
-  @override
-  String get noWorkoutToday => 'No workout today';
-
-  @override
-  String get allRoutinesCompleted => 'All routines completed!';
-
-  @override
-  String routineCount(int count) {
-    return '$count routine';
-  }
-
-  @override
-  String routineCountPlural(int count) {
-    return '$count routines';
-  }
+  String get allRoutinesCompleted => '所有计划已完成！';
 
   @override
   String exercisesAndDuration(int exercises, int minutes) {
-    return '$exercises exercises · $minutes min';
+    return '$exercises 个练习 · $minutes 分钟';
   }
 
   @override
-  String get errorLoadingCompletedRoutines => 'Error loading completed routines';
+  String get errorLoadingCompletedRoutines => '加载已完成计划时出错';
 
   @override
-  String errorLoadingScheduleWithMessage(String error) {
-    return 'Error loading schedule: $error';
+  String get errorLoadingCalendar => '加载日历时出错';
+
+  @override
+  String get routineTimer => '训练计时器';
+
+  @override
+  String get routineTimerDesc => '显示当前练习的剩余时间';
+
+  @override
+  String timeRemaining(String time) {
+    return '剩余时间：$time';
   }
 
   @override
-  String get errorLoadingCalendar => 'Error loading calendar';
+  String get noRoutineSelected => '未选择训练计划';
 
   @override
-  String get errorLoadingDetails => 'Error loading details';
+  String get credits => '致谢';
 
   @override
-  String get errorLoading => 'Error loading';
+  String get developedBy => '开发者';
+
+  @override
+  String get githubUrl => 'GitHub';
+
+  @override
+  String get copyToClipboard => 'GitHub链接已复制到剪贴板！';
+
+  @override
+  String get thankYouMessage => '感谢您使用我们的应用！';
+
+  @override
+  String get fitnessGoalsMessage => '我们希望它能帮助您实现您的健身目标。';
+
+  @override
+  String get close => '关闭';
 }

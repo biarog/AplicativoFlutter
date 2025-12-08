@@ -4,15 +4,13 @@
   "appTitle": "Fitness Routines",
   "yourRoutines": "Your Routines",
   "options": "Options",
+  "appSettings": "App Settings",
   "theme": "Theme",
   "darkMode": "Dark mode",
   "themeColor": "Theme color",
   "language": "Language",
-  "sortRoutines": "Sort Routines",
-  "sortNotImplemented": "Sort not implemented",
   "deleteAllRoutines": "Delete all routines",
   "removeAllRoutinesDesc": "Remove all saved routines from device and cloud",
-  "notSignedIn": "Not signed in",
   "deleteAllRoutinesConfirm": "Are you sure you want to delete all saved routines? This cannot be undone.",
   "cancel": "Cancel",
   "delete": "Delete",
@@ -25,25 +23,7 @@
       }
     }
   },
-  "filter": "Filter",
-  "filterNotImplemented": "Filter not implemented",
   "noRoutinesYet": "No routines yet. Tap Create to add your first routine.",
-  "exercisesCount": "{count} exercises",
-  "@exercisesCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "duration": "~{seconds}s",
-  "@duration": {
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "play": "Play",
   "deleteRoutine": "Delete routine",
   "deleteRoutineConfirm": "Delete \"{name}\"? This will remove it from your device and cloud.",
@@ -88,14 +68,6 @@
   "routines": "Routines",
   "calendar": "Calendar",
   "create": "Create",
-  "routineCompleted": "Routine \"{name}\" completed and marked on calendar.",
-  "@routineCompleted": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "exerciseProgress": "Exercise {current} of {total}",
   "@exerciseProgress": {
     "placeholders": {
@@ -146,7 +118,6 @@
   "nameUpdated": "Name updated",
   "changePassword": "Change password",
   "changePasswordNotImplemented": "Password change dialog not implemented yet.",
-  "ok": "OK",
   "displayName": "Display name",
   "pleaseEnterDisplayName": "Please enter a display name",
   "save": "Save",
@@ -177,6 +148,12 @@
   "noExercisesAdded": "No exercises added yet",
   "agenda": "Agenda",
   "todaysWorkout": "Today's workout",
+  "name": "Name",
+  "nameHint": "Full name (displayed publicly)",
+  "confirmPassword": "Confirm Password",
+  "pleaseConfirmPassword": "Please confirm your password",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "appCredits": "App Credits",
   "emailHint": "you@example.com",
   "pleaseEnterEmail": "Please enter your email",
   "pleaseEnterValidEmail": "Please enter a valid email",
@@ -215,10 +192,6 @@
     "weightKg": "Weight (kg)",
     "invalidYoutubeUrl": "Invalid YouTube URL",
     "noWorkoutThisDay": "No workout performed on this day",
-    "exercisesCount2": "exercises",
-    "min": "min",
-    "setupAgenda": "Setup Agenda",
-    "organizeWeekWorkouts": "Organize your week workouts",
     "errorLoadingRoutines": "Error loading routines",
     "account": "Account",
     "configureSchedule": "Configure Schedule",
@@ -231,35 +204,8 @@
         }
       }
     },
-    "done": "Done",
-    "errorLoadingSchedule": "Error loading schedule",
-    "back": "Back",
     "loadingRoutines": "Loading routines...",
-    "monday": "Monday",
-    "tuesday": "Tuesday",
-    "wednesday": "Wednesday",
-    "thursday": "Thursday",
-    "friday": "Friday",
-    "saturday": "Saturday",
-    "sunday": "Sunday",
-    "noWorkoutToday": "No workout today",
     "allRoutinesCompleted": "All routines completed!",
-    "routineCount": "{count} routine",
-    "@routineCount": {
-      "placeholders": {
-        "count": {
-          "type": "int"
-        }
-      }
-    },
-    "routineCountPlural": "{count} routines",
-    "@routineCountPlural": {
-      "placeholders": {
-        "count": {
-          "type": "int"
-        }
-      }
-    },
     "exercisesAndDuration": "{exercises} exercises · {minutes} min",
     "@exercisesAndDuration": {
       "placeholders": {
@@ -272,16 +218,23 @@
       }
     },
     "errorLoadingCompletedRoutines": "Error loading completed routines",
-    "errorLoadingSchedule": "Error loading schedule",
-    "errorLoadingScheduleWithMessage": "Error loading schedule: {error}",
-    "@errorLoadingScheduleWithMessage": {
+    "errorLoadingCalendar": "Error loading calendar",
+    "routineTimer": "Routine Timer",
+    "routineTimerDesc": "Shows remaining time for current exercise",
+    "timeRemaining": "Time remaining: {time}",
+    "@timeRemaining": {
       "placeholders": {
-        "error": {
+        "time": {
           "type": "String"
         }
       }
     },
-    "errorLoadingCalendar": "Error loading calendar",
-    "errorLoadingDetails": "Error loading details",
-    "errorLoading": "Error loading"
+    "noRoutineSelected": "No routine selected",
+    "credits": "Credits",
+    "developedBy": "Developed by",
+    "githubUrl": "GitHub",
+    "copyToClipboard": "GitHub URL copied to clipboard!",
+    "thankYouMessage": "Thank you for using our app!",
+    "fitnessGoalsMessage": "We hope it helps you achieve your fitness goals.",
+    "close": "Close"
   }

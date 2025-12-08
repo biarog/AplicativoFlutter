@@ -107,11 +107,11 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                 final l10n = AppLocalizations.of(context)!;
 
                 if (todayRoutinesNotCompleted.isEmpty) {
-                  title = l10n.noWorkoutToday;
+                  title = l10n.noWorkoutThisDay;
                   info = l10n.allRoutinesCompleted;
                 } else {
                   final count = todayRoutinesNotCompleted.length;
-                  title = count > 1 ? l10n.routineCountPlural(count) : l10n.routineCount(count);
+                  title = count > 1 ? '$count ${l10n.routines}' : '1 ${l10n.routines.toLowerCase()}';
                   
                   final totalExercises = todayRoutinesNotCompleted.fold<int>(
                     0,
@@ -265,7 +265,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
           margin: EdgeInsets.zero,
           child: Padding(
             padding: const EdgeInsets.all(12.0),
-            child: Text(l10n.errorLoadingScheduleWithMessage(err.toString())),
+            child: Text(l10n.errorLoadingCalendar),
           ),
         );
       },
@@ -420,7 +420,7 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                 ],
               ),
               const SizedBox(height: 16),
-              Center(child: Text(l10n.errorLoadingSchedule)),
+              Center(child: Text(l10n.errorLoadingCalendar)),
             ],
           );
         },
@@ -530,11 +530,11 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, _) => Text(l10n.errorLoadingDetails),
+                  error: (err, _) => Text(l10n.errorLoadingRoutines),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Text(l10n.errorLoading),
+              error: (err, _) => Text(l10n.errorLoadingCompletedRoutines),
             )
           ],
         ),

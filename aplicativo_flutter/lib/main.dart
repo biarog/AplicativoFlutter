@@ -157,7 +157,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)
                       ),
                       subtitle: Text(
-                        '${routine.exercises.length} exercises • ~${routine.totalDuration}s',
+                        AppLocalizations.of(context)!.exercisesAndDuration(routine.exercises.length, routine.totalDuration ~/ 60),
                         style: TextStyle(color: Theme.of(context).colorScheme.onTertiary),
                       ),
                       trailing: Row(
@@ -246,7 +246,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.info),
-                  title: Text("App Credits"),
+                  title: Text(AppLocalizations.of(context)!.appCredits),
                   onTap: () {
                     Navigator.of(context).pop();
                     showDialog<void>(
@@ -325,7 +325,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ].map((l) {
                       final currentLocale = localRef.watch(localeProvider);
                       final isSelected = (currentLocale?.languageCode ?? '') == l.languageCode;
-                      final localeNames = {
+                      const localeNames = {
                         'en': 'English',
                         'pt': 'Português',
                         'es': 'Español',
@@ -415,7 +415,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             Expanded(
               child: AutoSizeText(
-                'Fitness Routines',
+                AppLocalizations.of(context)!.appTitle,
                 maxLines: 1,
                 minFontSize: 10,
                 overflow: TextOverflow.ellipsis,

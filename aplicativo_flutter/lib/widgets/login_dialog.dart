@@ -71,7 +71,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
     } catch (e, st) {
       debugPrint('[LoginDialog] validator threw: $e\n$st');
       setState(() {
-        _errorMessage = 'Validation error. Please check your input.';
+        _errorMessage = AppLocalizations.of(context)!.validationError;
       });
       return null;
     }
@@ -96,7 +96,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
 
       setState(() {
         // Show a combined message (prefer field messages when available)
-        _errorMessage = emailErr ?? passErr ?? 'Please fix the errors above.';
+        _errorMessage = emailErr ?? passErr ?? AppLocalizations.of(context)!.pleaseFixErrors;
       });
 
       return null;
@@ -118,22 +118,22 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
       setState(() {
         switch (e.code) {
           case 'user-not-found':
-            _errorMessage = 'No user found with this email.';
+            _errorMessage = AppLocalizations.of(context)!.userNotFound;
             break;
           case 'wrong-password':
-            _errorMessage = 'Incorrect password.';
+            _errorMessage = AppLocalizations.of(context)!.wrongPassword;
             break;
           case 'email-already-in-use':
-            _errorMessage = 'An account already exists with this email.';
+            _errorMessage = AppLocalizations.of(context)!.emailAlreadyInUse;
             break;
           case 'weak-password':
-            _errorMessage = 'Password is too weak. Use at least 6 characters.';
+            _errorMessage = AppLocalizations.of(context)!.weakPassword;
             break;
           case 'invalid-email':
-            _errorMessage = 'Invalid email address.';
+            _errorMessage = AppLocalizations.of(context)!.invalidEmail;
             break;
           default:
-            _errorMessage = e.message ?? 'Authentication failed.';
+            _errorMessage = e.message ?? AppLocalizations.of(context)!.authenticationFailed;
         }
       });
       return null;
@@ -166,12 +166,12 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
       return auth;
     } on FirebaseAuthException catch (e) {
       setState(() {
-        _errorMessage = e.message ?? 'Google sign-in failed.';
+        _errorMessage = e.message ?? AppLocalizations.of(context)!.googleSignInFailed;
       });
       return null;
     } catch (e, st) {
       setState(() {
-        _errorMessage = 'Google sign-in error. Please try again.';
+        _errorMessage = AppLocalizations.of(context)!.googleSignInError;
       });
       debugPrint('Google sign-in error: $e\n$st');
       return null;
@@ -189,7 +189,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      setState(() => _errorMessage = 'Please enter a valid email address.');
+      setState(() => _errorMessage = AppLocalizations.of(context)!.pleaseEnterValidEmailForReset);
       return;
     }
 
@@ -246,16 +246,16 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
             focusNode: _emailFocusNode,
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              hintText: 'you@example.com',
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context)!.email,
+              hintText: AppLocalizations.of(context)!.emailHint,
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Please enter your email';
+                return AppLocalizations.of(context)!.pleaseEnterEmail;
               }
               if (!value.contains('@')) {
-                return 'Please enter a valid email';
+                return AppLocalizations.of(context)!.pleaseEnterValidEmail;
               }
               return null;
             },
@@ -265,16 +265,16 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
             key: _passwordFieldKey,
             focusNode: _passwordFocusNode,
             controller: _passwordController,
-            decoration: const InputDecoration(
-              labelText: 'Password',
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context)!.password,
             ),
             obscureText: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your password';
+                return AppLocalizations.of(context)!.pleaseEnterPassword;
               }
               if (value.length < 6) {
-                return 'Password must be at least 6 characters';
+                return AppLocalizations.of(context)!.passwordMinLength;
               }
               return null;
             },
@@ -283,7 +283,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
           TextButton(
             onPressed: _isSigningIn ? null : _resetPassword,
               child: Text(
-                'Forgot password?',
+                AppLocalizations.of(context)!.forgotPassword,
                 style: TextStyle(
                   color: forgotPasswordColor,
                   fontWeight: FontWeight.bold,
@@ -328,7 +328,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
               width: 20,
             ),
             label: Text(
-              'Continue with Google', 
+              AppLocalizations.of(context)!.continueWithGoogle, 
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             style: OutlinedButton.styleFrom(

@@ -64,7 +64,7 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
       valid = _formKey.currentState?.validate() ?? false;
     } catch (e, st) {
       debugPrint('[CreateAccountDialog] validator threw: $e\n$st');
-      setState(() => _errorMessage = 'Validation error. Please check your input.');
+      setState(() => _errorMessage = AppLocalizations.of(context)!.validationError);
       return null;
     }
 
@@ -89,7 +89,7 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
       }
 
       setState(() {
-        _errorMessage = emailErr ?? passErr ?? confirmErr ?? 'Please fix the errors above.';
+        _errorMessage = emailErr ?? passErr ?? confirmErr ?? AppLocalizations.of(context)!.pleaseFixErrors;
       });
       return null;
     }
@@ -111,22 +111,22 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
       setState(() {
         switch (e.code) {
           case 'user-not-found':
-            _errorMessage = 'No user found with this email.';
+            _errorMessage = AppLocalizations.of(context)!.userNotFound;
             break;
           case 'wrong-password':
-            _errorMessage = 'Incorrect password.';
+            _errorMessage = AppLocalizations.of(context)!.wrongPassword;
             break;
           case 'email-already-in-use':
-            _errorMessage = 'An account already exists with this email.';
+            _errorMessage = AppLocalizations.of(context)!.emailAlreadyInUse;
             break;
           case 'weak-password':
-            _errorMessage = 'Password is too weak. Use at least 6 characters.';
+            _errorMessage = AppLocalizations.of(context)!.weakPassword;
             break;
           case 'invalid-email':
-            _errorMessage = 'Invalid email address.';
+            _errorMessage = AppLocalizations.of(context)!.invalidEmail;
             break;
           default:
-            _errorMessage = e.message ?? 'Authentication failed.';
+            _errorMessage = e.message ?? AppLocalizations.of(context)!.authenticationFailed;
         }
       });
       return null;
@@ -158,13 +158,13 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
         if (e.code == 'popup-closed-by-user' || e.code == 'cancelled') {
           _errorMessage = null;
         } else {
-          _errorMessage = e.message ?? 'Google sign-in failed.';
+          _errorMessage = e.message ?? AppLocalizations.of(context)!.googleSignInFailed;
         }
       });
       return null;
     } catch (e, st) {
       setState(() {
-        _errorMessage = 'Google sign-in error. Please try again.';
+        _errorMessage = AppLocalizations.of(context)!.googleSignInError;
       });
       debugPrint('Google sign-in error: $e\n$st');
       return null;
@@ -199,13 +199,13 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
                 key: _nameFieldKey,
                 focusNode: _nameFocusNode,
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  hintText: 'Full name (displayed publicly)',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.name,
+                  hintText: AppLocalizations.of(context)!.nameHint,
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a display name';
+                    return AppLocalizations.of(context)!.pleaseEnterDisplayName;
                   }
                   return null;
                 },
@@ -216,16 +216,16 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
               focusNode: _emailFocusNode,
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'you@example.com',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.email,
+                hintText: AppLocalizations.of(context)!.emailHint,
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Please enter your email';
+                  return AppLocalizations.of(context)!.pleaseEnterEmail;
                 }
                 if (!value.contains('@')) {
-                  return 'Please enter a valid email';
+                  return AppLocalizations.of(context)!.pleaseEnterValidEmail;
                 }
                 return null;
               },
@@ -235,16 +235,16 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
               key: _passwordFieldKey,
               focusNode: _passwordFocusNode,
               controller: _passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Password',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.password,
               ),
               obscureText: true,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter your password';
+                  return AppLocalizations.of(context)!.pleaseEnterPassword;
                 }
                 if (value.length < 6) {
-                  return 'Password must be at least 6 characters';
+                  return AppLocalizations.of(context)!.passwordMinLength;
                 }
                 return null;
               },
@@ -254,16 +254,16 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
               key: _confirmFieldKey,
               focusNode: _confirmFocusNode,
               controller: _confirmPasswordController,
-              decoration: const InputDecoration(
-                labelText: 'Confirm Password',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.confirmPassword,
               ),
               obscureText: true,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
+                  return AppLocalizations.of(context)!.pleaseConfirmPassword;
                 }
                 if (value != _passwordController.text) {
-                  return 'Passwords do not match';
+                  return AppLocalizations.of(context)!.passwordsDoNotMatch;
                 }
                 return null;
               },
@@ -299,7 +299,7 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
                 width: 20,
               ),
               label: Text(
-                'Continue with Google', 
+                AppLocalizations.of(context)!.continueWithGoogle, 
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               ),
               style: OutlinedButton.styleFrom(

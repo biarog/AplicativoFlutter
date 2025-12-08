@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../models/routine.dart';
 import '../providers/schedule_provider.dart';
 import '../providers/routine_provider.dart';
@@ -13,15 +14,14 @@ class ConfigureScheduleScreen extends ConsumerStatefulWidget {
 }
 
 class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScreen> {
-  List<String> get weekDays => [
-    AppLocalizations.of(context)!.monday,
-    AppLocalizations.of(context)!.tuesday,
-    AppLocalizations.of(context)!.wednesday,
-    AppLocalizations.of(context)!.thursday,
-    AppLocalizations.of(context)!.friday,
-    AppLocalizations.of(context)!.saturday,
-    AppLocalizations.of(context)!.sunday,
-  ];
+  List<String> get weekDays {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    return List.generate(7, (index) {
+      final day = monday.add(Duration(days: index));
+      return DateFormat.EEEE(Localizations.localeOf(context).toString()).format(day);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +71,7 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
                         const SizedBox(height: 24),
                         ElevatedButton(
                           onPressed: () => Navigator.pop(context),
-                          child: Text(AppLocalizations.of(context)!.done),
+                          child: Text(AppLocalizations.of(context)!.save),
                         ),
                       ],
                     ),
@@ -88,11 +88,11 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
                 children: [
                   const Icon(Icons.error, size: 48, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text(AppLocalizations.of(context)!.errorLoadingSchedule),
+                  Text(AppLocalizations.of(context)!.errorLoadingCalendar),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text(AppLocalizations.of(context)!.back),
+                    child: Text(AppLocalizations.of(context)!.cancel),
                   ),
                 ],
               ),
@@ -119,7 +119,7 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text(AppLocalizations.of(context)!.back),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
             ],
           ),
@@ -183,7 +183,7 @@ class _ConfigureScheduleScreenState extends ConsumerState<ConfigureScheduleScree
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                 child: Text(
-                  'Nenhuma rotina selecionada',
+                  AppLocalizations.of(context)!.noRoutineSelected,
                   style: TextStyle(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic),
                 ),
               ),

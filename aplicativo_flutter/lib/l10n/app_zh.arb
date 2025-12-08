@@ -9,21 +9,14 @@
   "darkMode": "深色模式",
   "themeColor": "主题颜色",
   "language": "语言",
-  "sortRoutines": "排序计划",
-  "sortNotImplemented": "排序未实现",
   "deleteAllRoutines": "删除所有计划",
   "removeAllRoutinesDesc": "从设备和云端删除所有已保存的计划",
-  "notSignedIn": "未登录",
   "deleteAllRoutinesConfirm": "您确定要删除所有已保存的计划吗？此操作无法撤消。",
   "cancel": "取消",
   "delete": "删除",
   "allRoutinesDeleted": "所有计划已删除",
   "failedToDeleteRoutines": "删除计划失败：{error}",
-  "filter": "筛选",
-  "filterNotImplemented": "筛选未实现",
   "noRoutinesYet": "还没有计划。点击创建添加您的第一个计划。",
-  "exercisesCount": "{count} 个练习",
-  "duration": "~{seconds}秒",
   "play": "播放",
   "deleteRoutine": "删除计划",
   "deleteRoutineConfirm": "删除\"{name}\"？这将从您的设备和云端删除它。",
@@ -40,7 +33,6 @@
   "routines": "计划",
   "calendar": "日历",
   "create": "创建",
-  "routineCompleted": "计划\"{name}\"已完成并标记在日历上。",
   "exerciseProgress": "练习 {current} / {total}",
   "setsLeft": "剩余组数",
   "secondsShort": "{seconds} 秒",
@@ -67,7 +59,6 @@
   "nameUpdated": "名称已更新",
   "changePassword": "更改密码",
   "changePasswordNotImplemented": "密码更改对话框尚未实现。",
-  "ok": "确定",
   "displayName": "显示名称",
   "pleaseEnterDisplayName": "请输入显示名称",
   "save": "保存",
@@ -91,6 +82,12 @@
   "noExercisesAdded": "尚未添加练习",
   "agenda": "议程",
   "todaysWorkout": "今日训练",
+  "name": "姓名",
+  "nameHint": "全名（公开显示）",
+  "confirmPassword": "确认密码",
+  "pleaseConfirmPassword": "请确认您的密码",
+  "passwordsDoNotMatch": "密码不匹配",
+  "appCredits": "应用程序制作人员",
   "emailHint": "你@例子.com",
   "pleaseEnterEmail": "请输入您的电子邮件",
   "pleaseEnterValidEmail": "请输入有效的电子邮件",
@@ -129,10 +126,6 @@
     "weightKg": "重量（公斤）",
     "invalidYoutubeUrl": "无效的YouTube网址",
     "noWorkoutThisDay": "此日期没有进行训练",
-    "exercisesCount2": "个练习",
-    "min": "分钟",
-    "setupAgenda": "设置日程",
-    "organizeWeekWorkouts": "安排您的每周训练",
     "errorLoadingRoutines": "加载例程时出错: {error}",
     "@errorLoadingRoutines": {
       "placeholders": {
@@ -152,15 +145,37 @@
         }
       }
     },
-    "done": "完成",
-    "errorLoadingSchedule": "加载日程时出错",
-    "back": "返回",
     "loadingRoutines": "正在加载例程...",
-    "monday": "星期一",
-    "tuesday": "星期二",
-    "wednesday": "星期三",
-    "thursday": "星期四",
-    "friday": "星期五",
-    "saturday": "星期六",
-    "sunday": "星期日"
+    "routineTimer": "训练计时器",
+    "routineTimerDesc": "显示当前练习的剩余时间",
+    "timeRemaining": "剩余时间：{time}",
+    "@timeRemaining": {
+      "placeholders": {
+        "time": {
+          "type": "String"
+        }
+      }
+    },
+    "noRoutineSelected": "未选择训练计划",
+    "allRoutinesCompleted": "所有计划已完成！",
+    "exercisesAndDuration": "{exercises} 个练习 · {minutes} 分钟",
+    "@exercisesAndDuration": {
+      "placeholders": {
+        "exercises": {
+          "type": "int"
+        },
+        "minutes": {
+          "type": "int"
+        }
+      }
+    },
+    "errorLoadingCompletedRoutines": "加载已完成计划时出错",
+    "errorLoadingCalendar": "加载日历时出错",
+    "credits": "致谢",
+    "developedBy": "开发者",
+    "githubUrl": "GitHub",
+    "copyToClipboard": "GitHub链接已复制到剪贴板！",
+    "thankYouMessage": "感谢您使用我们的应用！",
+    "fitnessGoalsMessage": "我们希望它能帮助您实现您的健身目标。",
+    "close": "关闭"
   }

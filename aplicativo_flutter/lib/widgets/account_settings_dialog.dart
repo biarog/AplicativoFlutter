@@ -73,21 +73,6 @@ class _AccountSettingsDialogState extends ConsumerState<AccountSettingsDialog> {
     }
   }
 
-  void _openChangePassword() {
-    // Placeholder: open a simple dialog for now. You can replace this later
-    // with a full password-change flow dialog/widget.
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.changePassword),
-        content: Text(AppLocalizations.of(context)!.changePasswordNotImplemented),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(AppLocalizations.of(context)!.ok)),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     // Determine width: use explicit widget.width if provided,
@@ -115,13 +100,6 @@ class _AccountSettingsDialogState extends ConsumerState<AccountSettingsDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: _openChangePassword,
-                    child: Text(AppLocalizations.of(context)!.changePassword),
-                  ),
-                ),
                 if (_error != null) ...[
                   const SizedBox(height: 8),
                   Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
@@ -137,11 +115,27 @@ class _AccountSettingsDialogState extends ConsumerState<AccountSettingsDialog> {
           children: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
+              style: ButtonStyle(
+                side: WidgetStatePropertyAll(BorderSide(color: Theme.of(context).colorScheme.primary))
+              ),
               child: Text(AppLocalizations.of(context)!.cancel),
             ),
             ElevatedButton(
               onPressed: _isSaving ? null : _save,
-              child: _isSaving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : Text(AppLocalizations.of(context)!.save),
+              style: ButtonStyle(
+                side: WidgetStatePropertyAll(BorderSide(color: Theme.of(context).colorScheme.primary)),
+                backgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.secondary),
+              ),
+              child: _isSaving 
+              ? const SizedBox(
+                width: 16, 
+                height: 16, 
+                child: CircularProgressIndicator(strokeWidth: 2)
+              ) 
+              : Text(
+                AppLocalizations.of(context)!.save, 
+                style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)
+                ),
             ),
           ],
         )

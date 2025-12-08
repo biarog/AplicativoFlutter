@@ -345,7 +345,7 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                 style: TextStyle(color: Theme.of(context).colorScheme.onTertiary),
               ),
               style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.all(Theme.of(context).colorScheme.tertiary),
+                backgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.tertiary),
               ),
             ),
             const SizedBox(width: 12),
@@ -362,8 +362,8 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                 ref.read(useWeightProvider.notifier).set(false);
               },
               style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.all(Theme.of(context).colorScheme.inverseSurface),
-                side: WidgetStateProperty.all(BorderSide(color: Theme.of(context).colorScheme.error)),
+                backgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.inverseSurface),
+                side: WidgetStatePropertyAll(BorderSide(color: Theme.of(context).colorScheme.error)),
               ),
               child: Text(
                 AppLocalizations.of(context)!.clear,
@@ -420,8 +420,6 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
                   Text(AppLocalizations.of(context)!.newExercise, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   _buildExerciseForm(),
-                  const SizedBox(height: 16),
-                  const Divider(),
                   const SizedBox(height: 24),
                   Container(
                     height: 3,

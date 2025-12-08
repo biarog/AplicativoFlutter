@@ -17,6 +17,7 @@ import 'screens/create_routine_screen.dart';
 import 'widgets/login_dialog.dart';
 import 'widgets/create_account_dialog.dart';
 import 'widgets/account_settings_dialog.dart';
+import 'widgets/credits_dialog.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/local_routines_provider.dart';
@@ -244,13 +245,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               shrinkWrap: true,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.settings),
-                  title: Text(AppLocalizations.of(context)!.appSettings),
+                  leading: const Icon(Icons.info),
+                  title: Text("App Credits"),
                   onTap: () {
                     Navigator.of(context).pop();
                     showDialog<void>(
                       context: context,
-                      builder: (_) => const AccountSettingsDialog(),
+                      builder: (_) => const CreditsDialog(),
                     );
                   },
                 ),
@@ -527,7 +528,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 builder: (_) => const AccountSettingsDialog(),
                               );
                             },
-                            icon: const Icon(Icons.settings, size: 20),
+                            icon: const Icon(Icons.more_vert, size: 20),
                             color: Theme.of(context).colorScheme.onPrimary,
                           ),
                           TextButton(

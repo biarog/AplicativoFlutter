@@ -350,6 +350,9 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
           children: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
+              style: ButtonStyle(
+                side: WidgetStatePropertyAll(BorderSide(color: Theme.of(context).colorScheme.primary))
+              ),
               child: Text(AppLocalizations.of(context)!.cancel),
             ),
             ElevatedButton(
@@ -369,6 +372,10 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
                         if (!mounted) return;
                         if (auth != null) navigator.pop(auth);
                       },
+              style: ButtonStyle(
+                side: WidgetStatePropertyAll(BorderSide(color: Theme.of(context).colorScheme.primary)),
+                backgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.secondary),
+              ),
               child: _isSigningIn
                   ? SizedBox(
                       height: 16,
@@ -376,10 +383,12 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
                       child: CircularProgressIndicator(
                         strokeWidth: 2.0,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                            Theme.of(context).colorScheme.onPrimary),
+                            Theme.of(context).colorScheme.onSecondary),
                       ),
                     )
-                  : Text(AppLocalizations.of(context)!.login),
+                  : Text(AppLocalizations.of(context)!.login,
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                  ),
             ),
           ],
         )

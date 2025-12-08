@@ -321,6 +321,9 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
           children: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
+              style: ButtonStyle(
+                side: WidgetStatePropertyAll(BorderSide(color: Theme.of(context).colorScheme.primary))
+              ),
               child: Text(AppLocalizations.of(context)!.cancel),
             ),
             ElevatedButton(
@@ -337,6 +340,10 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
                       if (!mounted) return;
                       if (auth != null) navigator.pop(auth);
                     },
+              style: ButtonStyle(
+                side: WidgetStatePropertyAll(BorderSide(color: Theme.of(context).colorScheme.primary)),
+                backgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.secondary),
+              ),
               child: _isSigningIn
                   ? SizedBox(
                       height: 16,
@@ -344,10 +351,12 @@ class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
                       child: CircularProgressIndicator(
                         strokeWidth: 2.0,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                            Theme.of(context).colorScheme.onPrimary),
+                            Theme.of(context).colorScheme.onSecondary),
                       ),
                     )
-                  : Text(AppLocalizations.of(context)!.createAccount),
+                  : Text(AppLocalizations.of(context)!.createAccount,
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)
+                  ),
             ),
           ],
         )

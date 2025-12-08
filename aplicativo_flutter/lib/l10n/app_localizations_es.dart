@@ -413,4 +413,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get close => 'Cerrar';
+
+  @override
+  String get edit => 'Editar';
+
+  @override
+  String get editRoutine => 'Editar rutina';
 }

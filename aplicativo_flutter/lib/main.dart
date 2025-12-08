@@ -13,6 +13,7 @@ import 'models/auth_dto.dart';
 import 'screens/routine_player_screen.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/create_routine_screen.dart';
+import 'screens/edit_routine_screen.dart';
 
 import 'widgets/login_dialog.dart';
 import 'widgets/create_account_dialog.dart';
@@ -174,6 +175,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 builder: (_) => RoutinePlayerScreen(routine: routine),
                               ));
                             },
+                          ),
+                          const SizedBox(width: 8),
+                          // Edit button
+                          IconButton(
+                            tooltip: AppLocalizations.of(context)!.editRoutine,
+                            color: Theme.of(context).colorScheme.primary,
+                            onPressed: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => EditRoutineScreen(routine: routine),
+                              ));
+                            },
+                            icon: const Icon(Icons.edit),
                           ),
                           const SizedBox(width: 8),
                           // Per-routine delete button
@@ -406,6 +419,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Watch auth state to know whether a user is signed in.
     final authState = ref.watch(authStateChangesProvider);
     final isLoggedIn = authState.maybeWhen(data: (u) => u != null, orElse: () => false);
+    
+    // Listen for auth state changes and reload routines when user logs in/out
+    ref.listen(authStateChangesProvider, (previous, next) {
+      next.whenData((_) {
+        // Invalidate userRoutinesProvider to reload from Firebase
+        ref.invalidate(userRoutinesProvider);
+      });
+    });
+    
     // Build pages on each build so we can use context in children
     final pages = <Widget>[_buildRoutinesPage(), const CalendarScreen(), const CreateRoutineScreen()];
 
@@ -439,12 +461,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           context: context,
                           builder: (_) => CreateAccountDialog(),
                         );
-                            if (!mounted) return;
-                            if (auth != null) {
-                              messenger.showSnackBar(SnackBar(
-                                content: Text(l10n.signedIn(auth.email ?? auth.uid)),
-                              ));
-                            }
+                          if (!mounted) return;
+                          if (auth != null) {
+                            messenger.showSnackBar(SnackBar(
+                              content: Text(l10n.signedIn(auth.email ?? auth.uid)),
+                            ));
+                            // Invalidate routines provider to reload data after login
+                            ref.invalidate(userRoutinesProvider);
+                          }
                       },
                       label: Text(AppLocalizations.of(context)!.createAccount),
                       heroTag: 'create_account_fab',
@@ -471,6 +495,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             messenger.showSnackBar(SnackBar(
                               content: Text(l10n.signedIn(auth.email ?? auth.uid)),
                             ));
+                            // Invalidate routines provider to reload data after login
+                            ref.invalidate(userRoutinesProvider);
                           }
                       },
                       label: Text(AppLocalizations.of(context)!.login),
@@ -501,7 +527,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           if (photo != null && photo.isNotEmpty)
                             CircleAvatar(radius: 16, backgroundImage: NetworkImage(photo))
                           else
-                            CircleAvatar(radius: 16, child: Text(initial)),
+                            CircleAvatar(
+                              radius: 16, 
+                              backgroundColor: Theme.of(context).colorScheme.primary, 
+                              child: Text(
+                                initial,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           const SizedBox(width: 8),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

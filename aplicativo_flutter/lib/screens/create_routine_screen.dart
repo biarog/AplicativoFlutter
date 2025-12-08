@@ -228,19 +228,30 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
           controller: _exerciseNameController,
           decoration: InputDecoration(labelText: AppLocalizations.of(context)!.exerciseName),
         ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<ExerciseType>(
-          initialValue: formType,
-          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.exerciseType),
-          items: [
-            DropdownMenuItem(value: ExerciseType.timed, child: Text(AppLocalizations.of(context)!.timed)),
-            DropdownMenuItem(value: ExerciseType.counting, child: Text(AppLocalizations.of(context)!.counting)),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(AppLocalizations.of(context)!.exerciseType),
+            SegmentedButton<ExerciseType>(
+              segments: [
+                ButtonSegment(
+                  value: ExerciseType.timed,
+                  label: Text(AppLocalizations.of(context)!.timed),
+                ),
+                ButtonSegment(
+                  value: ExerciseType.counting,
+                  label: Text(AppLocalizations.of(context)!.counting),
+                ),
+              ],
+              selected: {formType},
+              onSelectionChanged: (Set<ExerciseType> newSelection) {
+                ref.read(exerciseTypeProvider.notifier).set(newSelection.first);
+              },
+            ),
           ],
-          onChanged: (ExerciseType? v) {
-            if (v != null) ref.read(exerciseTypeProvider.notifier).set(v);
-          },
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         if (formType == ExerciseType.timed) ...[
           TextField(
             controller: _secondsController,
@@ -289,25 +300,25 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Checkbox(
-                value: ref.watch(useWeightProvider),
-                onChanged: (v) => ref.read(useWeightProvider.notifier).set(v ?? false),
-              ),
               Text(AppLocalizations.of(context)!.useWeight),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _weightController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.weightKg),
-                  enabled: formUseWeight,
-                ),
+              Switch(
+                value: formUseWeight,
+                onChanged: (value) => ref.read(useWeightProvider.notifier).set(value),
               ),
             ],
           ),
+          if (formUseWeight) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _weightController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.weightKg),
+            ),
+          ],
           const SizedBox(height: 12),
           Container(
             height: 3,

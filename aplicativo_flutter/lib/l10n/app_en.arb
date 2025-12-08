@@ -236,5 +236,7 @@
     "copyToClipboard": "GitHub URL copied to clipboard!",
     "thankYouMessage": "Thank you for using our app!",
     "fitnessGoalsMessage": "We hope it helps you achieve your fitness goals.",
-    "close": "Close"
+    "close": "Close",
+    "edit": "Edit",
+    "editRoutine": "Edit routine"
   }

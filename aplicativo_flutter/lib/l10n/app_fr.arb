@@ -177,5 +177,7 @@
     "copyToClipboard": "URL GitHub copiée dans le presse-papiers!",
     "thankYouMessage": "Merci d'utiliser notre application!",
     "fitnessGoalsMessage": "Nous espérons qu'elle vous aidera à atteindre vos objectifs de fitness.",
-    "close": "Fermer"
+    "close": "Fermer",
+    "edit": "Modifier",
+    "editRoutine": "Modifier la routine"
   }

@@ -182,6 +182,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
     if (_currentIndex < widget.routine.exercises.length - 1) {
       setState(() {
         _currentIndex += 1;
+        _isPlaying = false; // Reset playing state when moving to next exercise
         final ex = widget.routine.exercises[_currentIndex];
         if (ex is TimedExercise) {
           _secondsRemaining = ex.seconds;
@@ -197,11 +198,8 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
           _totalSets = null;
         }
       });
-      if (_isPlaying) {
-        _start();
-      } else {
-        _autoStartIfNoVideo();
-      }
+      // Only auto-start if exercise doesn't have video
+      _autoStartIfNoVideo();
     } else {
       // Routine finished
       _completeRoutine();
@@ -213,6 +211,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
     if (_currentIndex > 0) {
       setState(() {
         _currentIndex -= 1;
+        _isPlaying = false; // Reset playing state when moving to previous exercise
         final ex = widget.routine.exercises[_currentIndex];
         if (ex is TimedExercise) {
           _secondsRemaining = ex.seconds;
@@ -230,6 +229,7 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
       });
     } else {
       setState(() {
+        _isPlaying = false; // Reset playing state when resetting first exercise
         final ex = widget.routine.exercises[_currentIndex];
         if (ex is TimedExercise) {
           _secondsRemaining = ex.seconds;
@@ -246,11 +246,8 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
         }
       });
     }
-    if (_isPlaying) {
-      _start();
-    } else {
-      _autoStartIfNoVideo();
-    }
+    // Only auto-start if exercise doesn't have video
+    _autoStartIfNoVideo();
   }
 
   Future<void> _completeRoutine() async {

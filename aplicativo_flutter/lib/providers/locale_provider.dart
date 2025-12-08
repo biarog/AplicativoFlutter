@@ -1,17 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class LocaleNotifier extends Notifier<Locale?> {
+class LocaleNotifier extends AsyncNotifier<Locale?> {
+  static const String _storageKey = 'selected_locale';
+
   @override
-  Locale? build() {
-    // Default to English if system locale cannot be determined
+  Future<Locale?> build() async {
+    return _loadLocaleFromStorage();
+  }
+
+  /// Carrega o idioma salvo do armazenamento local
+  Future<Locale?> _loadLocaleFromStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedLocale = prefs.getString(_storageKey);
+      
+      if (savedLocale != null && savedLocale.isNotEmpty) {
+        return Locale(savedLocale);
+      }
+    } catch (e) {
+      // Silently fail and use default
+    }
+    
+    // Default to English if nothing saved
     return const Locale('en');
   }
 
-  void setLocale(Locale? locale) => state = locale;
+  /// Define o idioma e salva no armazenamento local
+  Future<void> setLocale(Locale? locale) async {
+    if (locale == null) return;
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_storageKey, locale.languageCode);
+      state = AsyncValue.data(locale);
+    } catch (e) {
+      // Silently fail but still update state
+      state = AsyncValue.data(locale);
+    }
+  }
 }
 
-final localeProvider = NotifierProvider<LocaleNotifier, Locale?>(LocaleNotifier.new);
+final localeProvider = AsyncNotifierProvider<LocaleNotifier, Locale?>(LocaleNotifier.new);
 
 // Helper to get supported locales
 const supportedLocales = [

@@ -47,6 +47,7 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(themeSettingsProvider);
+    final locale = ref.watch(localeProvider);
 
     final lightScheme = ColorScheme.light(
       primary: settings.lightPrimary,
@@ -85,18 +86,40 @@ class MainApp extends ConsumerWidget {
     final darkTheme = ThemeData(colorScheme: darkScheme, useMaterial3: true)
         .copyWith(textTheme: GoogleFonts.rubikTextTheme(ThemeData.dark().textTheme));
     
-    final locale = ref.watch(localeProvider);
-    
-    return MaterialApp(
-      title: 'Fitness Routines',
-      debugShowCheckedModeBanner: false,
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: settings.isDark ? ThemeMode.dark : ThemeMode.light,
-      locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: const HomeScreen(),
+    return locale.when(
+      data: (selectedLocale) => MaterialApp(
+        title: 'Fitness Routines',
+        debugShowCheckedModeBanner: false,
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: settings.isDark ? ThemeMode.dark : ThemeMode.light,
+        locale: selectedLocale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const HomeScreen(),
+      ),
+      loading: () => MaterialApp(
+        title: 'Fitness Routines',
+        debugShowCheckedModeBanner: false,
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: settings.isDark ? ThemeMode.dark : ThemeMode.light,
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
+      ),
+      error: (err, stack) => MaterialApp(
+        title: 'Fitness Routines',
+        debugShowCheckedModeBanner: false,
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: settings.isDark ? ThemeMode.dark : ThemeMode.light,
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const Scaffold(body: Center(child: Text('Error loading locale'))),
+      ),
     );
   }
 }
@@ -152,78 +175,102 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       borderRadius: BorderRadius.circular(8.0),
                       side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 1.0),
                     ),
-                    child: ListTile(
-                      title: Text(
-                        routine.name, 
-                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)
-                      ),
-                      subtitle: Text(
-                        AppLocalizations.of(context)!.exercisesAndDuration(routine.exercises.length, routine.totalDuration ~/ 60),
-                        style: TextStyle(color: Theme.of(context).colorScheme.onTertiary),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                              backgroundColor: Theme.of(context).colorScheme.secondary,
-                            ),
-                            child: Text(AppLocalizations.of(context)!.play, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),),
-                            onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => RoutinePlayerScreen(routine: routine),
-                              ));
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                          // Edit button
-                          IconButton(
-                            tooltip: AppLocalizations.of(context)!.editRoutine,
-                            color: Theme.of(context).colorScheme.primary,
-                            onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => EditRoutineScreen(routine: routine),
-                              ));
-                            },
-                            icon: const Icon(Icons.edit),
-                          ),
-                          const SizedBox(width: 8),
-                          // Per-routine delete button
-                          IconButton(
-                            tooltip: AppLocalizations.of(context)!.deleteRoutine,
-                            color: Theme.of(context).colorScheme.error,
-                            onPressed: () async {
-                              final messenger = ScaffoldMessenger.of(context);
-                              final l10n = AppLocalizations.of(context)!;
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: Text(l10n.deleteRoutine),
-                                  content: Text(l10n.deleteRoutineConfirm(routine.name)),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.delete)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      routine.name, 
+                                      style: TextStyle(color: Theme.of(context).colorScheme.onTertiary, fontSize: 16, fontWeight: FontWeight.w600)
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      AppLocalizations.of(context)!.exercisesAndDuration(routine.exercises.length, routine.totalDuration ~/ 60),
+                                      style: TextStyle(color: Theme.of(context).colorScheme.onTertiary, fontSize: 12),
+                                    ),
                                   ],
                                 ),
-                              );
-                              if (confirm != true) return;
+                              ),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                width: 40,
+                                height: 40,
+                                child: IconButton(
+                                  tooltip: AppLocalizations.of(context)!.play,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  iconSize: 20,
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () {
+                                    Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (_) => RoutinePlayerScreen(routine: routine),
+                                    ));
+                                  },
+                                  icon: const Icon(Icons.play_arrow),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 40,
+                                height: 40,
+                                child: IconButton(
+                                  tooltip: AppLocalizations.of(context)!.editRoutine,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  iconSize: 20,
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () {
+                                    Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (_) => EditRoutineScreen(routine: routine),
+                                    ));
+                                  },
+                                  icon: const Icon(Icons.edit),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 40,
+                                height: 40,
+                                child: IconButton(
+                                  tooltip: AppLocalizations.of(context)!.deleteRoutine,
+                                  color: Theme.of(context).colorScheme.error,
+                                  iconSize: 20,
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () async {
+                                    final messenger = ScaffoldMessenger.of(context);
+                                    final l10n = AppLocalizations.of(context)!;
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: Text(l10n.deleteRoutine),
+                                        content: Text(l10n.deleteRoutineConfirm(routine.name)),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+                                          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.delete)),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm != true) return;
 
-                              try {
-                                // Remover do provider local (que também remove do storage)
-                                await ref.read(localRoutinesProvider.notifier).removeRoutine(routine.id);
-                                // Se logado, remover do Firebase também
-                                final user = ref.read(authStateChangesProvider).maybeWhen(data: (u) => u, orElse: () => null);
-                                if (user != null) {
-                                  await ref.read(authRepositoryProvider).removeRoutineForUser(user.uid, routine.id);
-                                }
-                                if (!mounted) return;
-                                messenger.showSnackBar(SnackBar(content: Text(l10n.routineDeleted)));
-                              } catch (e) {
-                                messenger.showSnackBar(SnackBar(content: Text(l10n.failedToDeleteRoutine(e.toString()))));
-                              }
-                            },
-                            icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.primary,),
+                                    try {
+                                      await ref.read(localRoutinesProvider.notifier).removeRoutine(routine.id);
+                                      final user = ref.read(authStateChangesProvider).maybeWhen(data: (u) => u, orElse: () => null);
+                                      if (user != null) {
+                                        await ref.read(authRepositoryProvider).removeRoutineForUser(user.uid, routine.id);
+                                      }
+                                      if (!mounted) return;
+                                      messenger.showSnackBar(SnackBar(content: Text(l10n.routineDeleted)));
+                                    } catch (e) {
+                                      messenger.showSnackBar(SnackBar(content: Text(l10n.failedToDeleteRoutine(e.toString()))));
+                                    }
+                                  },
+                                  icon: const Icon(Icons.delete_outline),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -336,8 +383,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const Locale('fr'),
                       const Locale('zh'),
                     ].map((l) {
-                      final currentLocale = localRef.watch(localeProvider);
-                      final isSelected = (currentLocale?.languageCode ?? '') == l.languageCode;
+                      final currentLocaleAsync = localRef.watch(localeProvider);
+                      final isSelected = currentLocaleAsync.whenData((currentLocale) {
+                        return (currentLocale?.languageCode ?? '') == l.languageCode;
+                      }).value ?? false;
+                      
                       const localeNames = {
                         'en': 'English',
                         'pt': 'Português',
@@ -348,8 +398,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       return FilterChip(
                         label: Text(localeNames[l.languageCode] ?? l.languageCode),
                         selected: isSelected,
-                        onSelected: (_) {
-                          localRef.read(localeProvider.notifier).setLocale(l);
+                        onSelected: (_) async {
+                          await localRef.read(localeProvider.notifier).setLocale(l);
                         },
                       );
                     }).toList(),

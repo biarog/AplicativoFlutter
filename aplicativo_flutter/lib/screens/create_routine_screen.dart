@@ -229,27 +229,23 @@ class _CreateRoutineScreenState extends ConsumerState<CreateRoutineScreen> {
           decoration: InputDecoration(labelText: AppLocalizations.of(context)!.exerciseName),
         ),
         const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(AppLocalizations.of(context)!.exerciseType),
-            SegmentedButton<ExerciseType>(
-              segments: [
-                ButtonSegment(
-                  value: ExerciseType.timed,
-                  label: Text(AppLocalizations.of(context)!.timed),
-                ),
-                ButtonSegment(
-                  value: ExerciseType.counting,
-                  label: Text(AppLocalizations.of(context)!.counting),
-                ),
-              ],
-              selected: {formType},
-              onSelectionChanged: (Set<ExerciseType> newSelection) {
-                ref.read(exerciseTypeProvider.notifier).set(newSelection.first);
-              },
+        Text(AppLocalizations.of(context)!.exerciseType),
+        const SizedBox(height: 8),
+        SegmentedButton<ExerciseType>(
+          segments: [
+            ButtonSegment(
+              value: ExerciseType.timed,
+              label: Text(AppLocalizations.of(context)!.timed),
+            ),
+            ButtonSegment(
+              value: ExerciseType.counting,
+              label: Text(AppLocalizations.of(context)!.counting),
             ),
           ],
+          selected: {formType},
+          onSelectionChanged: (Set<ExerciseType> newSelection) {
+            ref.read(exerciseTypeProvider.notifier).set(newSelection.first);
+          },
         ),
         const SizedBox(height: 12),
         if (formType == ExerciseType.timed) ...[

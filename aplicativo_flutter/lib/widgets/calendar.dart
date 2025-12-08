@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/schedule_provider.dart';
 import '../providers/routine_provider.dart';
 import '../providers/completed_routines_provider.dart';
+import '../providers/auth_provider.dart';
 import '../screens/configure_schedule_screen.dart';
 import '../screens/routine_player_screen.dart';
 import '../models/routine.dart';
@@ -571,6 +572,16 @@ class _CalendarWidgetState extends ConsumerState<CalendarWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen for auth state changes and reload calendar data when user logs in/out
+    ref.listen(authStateChangesProvider, (previous, next) {
+      next.whenData((_) {
+        // Invalidate calendar-related providers to reload from Firebase
+        ref.invalidate(scheduleProvider);
+        ref.invalidate(completedRoutinesProvider);
+        ref.invalidate(userRoutinesProvider);
+      });
+    });
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12.0),
       child: Center(

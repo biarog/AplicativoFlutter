@@ -1,0 +1,11 @@
+
+      <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+        
+        <rect x="0" y="0" width="1024" height="1024" rx="262" ry="262" fill="#ff6a00" />
+        <g transform="translate(512, 512) rotate(0)">
+           <g transform="translate(-350, -350)">
+             <svg xmlns="http://www.w3.org/2000/svg" width="700" height="700" viewBox="0 0 24 24" fill="#ffffff" stroke="#ffffff" stroke-width="2.1942857142857144" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alarm-clock-check" fill-opacity="0"><circle cx="12" cy="13" r="8"></circle><path d="M5 3 2 6"></path><path d="m22 6-3-3"></path><path d="M6.38 18.7 4 21"></path><path d="M17.64 18.67 20 21"></path><path d="m9 13 2 2 4-4"></path></svg>
+           </g>
+        </g>
+      </svg>
+    

@@ -1,0 +1,366 @@
+import 'package:flutter/material.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../models/auth_dto.dart';
+import '../providers/auth_provider.dart';
+import '../l10n/app_localizations.dart';
+
+/// Use with `showDialog<AuthDto?>(context: context, builder: (_) => CreateAccountDialog())`.
+class CreateAccountDialog extends ConsumerStatefulWidget {
+  /// Optional dialog width in logical pixels. If null, a responsive
+  /// width based on screen size will be used.
+  final double? width;
+
+  /// Optional maximum width for the dialog. Defaults to 600 if null.
+  final double? maxWidth;
+
+  const CreateAccountDialog({super.key, this.width, this.maxWidth});
+
+  @override
+  ConsumerState<CreateAccountDialog> createState() => _CreateAccountDialogState();
+}
+
+class _CreateAccountDialogState extends ConsumerState<CreateAccountDialog> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _emailFieldKey = GlobalKey<FormFieldState<String>>();
+  final _nameFieldKey = GlobalKey<FormFieldState<String>>();
+  final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
+  final _confirmFieldKey = GlobalKey<FormFieldState<String>>();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _nameFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
+  final FocusNode _confirmFocusNode = FocusNode();
+
+  bool _submitted = false;
+
+  bool _isSigningIn = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _nameController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _emailFocusNode.dispose();
+    _nameFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _confirmFocusNode.dispose();
+    super.dispose();
+  }
+
+
+  // Sign in with email and password
+  // Returns AuthDto on success or null on failure.
+  Future<AuthDto?> _signInWithEmailPassword() async {
+    bool valid = false;
+    try {
+      valid = _formKey.currentState?.validate() ?? false;
+    } catch (e, st) {
+      debugPrint('[CreateAccountDialog] validator threw: $e\n$st');
+      setState(() => _errorMessage = AppLocalizations.of(context)!.validationError);
+      return null;
+    }
+
+    if (!valid) {
+      // focus first invalid field and show a summary
+      final emailErr = _emailFieldKey.currentState?.errorText;
+      final passErr = _passwordFieldKey.currentState?.errorText;
+      final confirmErr = _confirmFieldKey.currentState?.errorText;
+
+      if (emailErr != null) {
+        try {
+          FocusScope.of(context).requestFocus(_emailFocusNode);
+        } catch (_) {}
+      } else if (passErr != null) {
+        try {
+          FocusScope.of(context).requestFocus(_passwordFocusNode);
+        } catch (_) {}
+      } else if (confirmErr != null) {
+        try {
+          FocusScope.of(context).requestFocus(_confirmFocusNode);
+        } catch (_) {}
+      }
+
+      setState(() {
+        _errorMessage = emailErr ?? passErr ?? confirmErr ?? AppLocalizations.of(context)!.pleaseFixErrors;
+      });
+      return null;
+    }
+
+    setState(() {
+      _isSigningIn = true;
+      _errorMessage = null;
+    });
+
+    try {
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
+  final name = _nameController.text.trim();
+
+  // Always create a new user in this dialog via the AuthRepository
+  final auth = await ref.read(authRepositoryProvider).createUserWithEmail(email: email, password: password, displayName: name.isEmpty ? null : name);
+      return auth;
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        switch (e.code) {
+          case 'user-not-found':
+            _errorMessage = AppLocalizations.of(context)!.userNotFound;
+            break;
+          case 'wrong-password':
+            _errorMessage = AppLocalizations.of(context)!.wrongPassword;
+            break;
+          case 'email-already-in-use':
+            _errorMessage = AppLocalizations.of(context)!.emailAlreadyInUse;
+            break;
+          case 'weak-password':
+            _errorMessage = AppLocalizations.of(context)!.weakPassword;
+            break;
+          case 'invalid-email':
+            _errorMessage = AppLocalizations.of(context)!.invalidEmail;
+            break;
+          default:
+            _errorMessage = e.message ?? AppLocalizations.of(context)!.authenticationFailed;
+        }
+      });
+      return null;
+    } catch (e, st) {
+      setState(() {
+        // Surface the actual exception message to help debugging.
+        _errorMessage = e.toString();
+      });
+      debugPrint('Email/Password auth error: $e\n$st');
+      return null;
+    } finally {
+      if (mounted) setState(() => _isSigningIn = false);
+    }
+  }
+
+  // Sign in with Google
+  // Returns AuthDto on success or null on failure.
+  Future<AuthDto?> _signInWithGoogle() async {
+    setState(() {
+      _isSigningIn = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final auth = await ref.read(authRepositoryProvider).signInWithGoogle();
+      return auth;
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'popup-closed-by-user' || e.code == 'cancelled') {
+          _errorMessage = null;
+        } else {
+          _errorMessage = e.message ?? AppLocalizations.of(context)!.googleSignInFailed;
+        }
+      });
+      return null;
+    } catch (e, st) {
+      setState(() {
+        _errorMessage = AppLocalizations.of(context)!.googleSignInError;
+      });
+      debugPrint('Google sign-in error: $e\n$st');
+      return null;
+    } finally {
+      if (mounted) setState(() => _isSigningIn = false);
+    }
+  }
+  
+  // AuthRepository handles Google sign-in exceptions and Firestore upsert.
+  
+  @override
+  Widget build(BuildContext context) {
+    // Determine width: use explicit widget.width if provided,
+    // otherwise use 85% of screen width as a sensible default.
+    final double computedWidth = widget.width ?? MediaQuery.of(context).size.width * 0.85;
+    final double computedMaxWidth = widget.maxWidth ?? 600;
+
+    return AlertDialog(
+      title: Text(AppLocalizations.of(context)!.createAccount),
+      // Wrap content with constraints so caller can control dialog size.
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: computedMaxWidth),
+        child: SizedBox(
+          width: computedWidth,
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _submitted ? AutovalidateMode.always : AutovalidateMode.disabled,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+              TextFormField(
+                key: _nameFieldKey,
+                focusNode: _nameFocusNode,
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.name,
+                  hintText: AppLocalizations.of(context)!.nameHint,
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return AppLocalizations.of(context)!.pleaseEnterDisplayName;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+            TextFormField(
+              key: _emailFieldKey,
+              focusNode: _emailFocusNode,
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.email,
+                hintText: AppLocalizations.of(context)!.emailHint,
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return AppLocalizations.of(context)!.pleaseEnterEmail;
+                }
+                if (!value.contains('@')) {
+                  return AppLocalizations.of(context)!.pleaseEnterValidEmail;
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: _passwordFieldKey,
+              focusNode: _passwordFocusNode,
+              controller: _passwordController,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.password,
+              ),
+              obscureText: true,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return AppLocalizations.of(context)!.pleaseEnterPassword;
+                }
+                if (value.length < 6) {
+                  return AppLocalizations.of(context)!.passwordMinLength;
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: _confirmFieldKey,
+              focusNode: _confirmFocusNode,
+              controller: _confirmPasswordController,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.confirmPassword,
+              ),
+              obscureText: true,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return AppLocalizations.of(context)!.pleaseConfirmPassword;
+                }
+                if (value != _passwordController.text) {
+                  return AppLocalizations.of(context)!.passwordsDoNotMatch;
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 20),
+            // Show auth/validation summary
+            if (_errorMessage != null) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Text(
+                  _errorMessage!,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+            OutlinedButton.icon(
+              onPressed: _isSigningIn
+                  ? null
+                  : () async {
+                      // Capture Navigator before awaiting so we don't use the
+                      // BuildContext across an async gap.
+                      final navigator = Navigator.of(context);
+                      final auth = await _signInWithGoogle();
+                      if (!mounted) return;
+                      if (auth != null) navigator.pop(auth);
+                    },
+              icon: Image.network(
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png',
+                height: 20,
+                width: 20,
+              ),
+              label: Text(
+                AppLocalizations.of(context)!.continueWithGoogle, 
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.all(20.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                side: BorderSide(color: Theme.of(context).colorScheme.primary),
+              ),
+            ),
+          ],
+        ), // Column
+      ), // Form
+        ), // SizedBox
+      ), // ConstrainedBox
+      actions: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ButtonStyle(
+                side: WidgetStatePropertyAll(BorderSide(color: Theme.of(context).colorScheme.primary))
+              ),
+              child: Text(AppLocalizations.of(context)!.cancel),
+            ),
+            ElevatedButton(
+              onPressed: _isSigningIn
+                  ? null
+                  : () async {
+                      setState(() {
+                        _submitted = true;
+                        _errorMessage = null;
+                      });
+                      // Capture navigator before the async call below.
+                      final navigator = Navigator.of(context);
+                      final auth = await _signInWithEmailPassword();
+                      if (!mounted) return;
+                      if (auth != null) navigator.pop(auth);
+                    },
+              style: ButtonStyle(
+                side: WidgetStatePropertyAll(BorderSide(color: Theme.of(context).colorScheme.primary)),
+                backgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.secondary),
+              ),
+              child: _isSigningIn
+                  ? SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).colorScheme.onSecondary),
+                      ),
+                    )
+                  : Text(AppLocalizations.of(context)!.createAccount,
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)
+                  ),
+            ),
+          ],
+        )
+      ],
+    );
+  }
+}

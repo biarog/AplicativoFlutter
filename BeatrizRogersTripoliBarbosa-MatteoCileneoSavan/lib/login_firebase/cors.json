@@ -1,0 +1,11 @@
+[
+  {
+    "origin": [
+      "http://localhost:*",
+      "https://ddm-coletivo-25.netlify.app"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type"],
+    "maxAgeSeconds": 3600
+  }
+]

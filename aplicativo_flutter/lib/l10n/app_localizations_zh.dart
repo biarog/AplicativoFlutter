@@ -413,4 +413,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get close => '关闭';
+
+  @override
+  String get edit => '编辑';
+
+  @override
+  String get editRoutine => '编辑计划';
 }

@@ -413,4 +413,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get close => 'Fechar';
+
+  @override
+  String get edit => 'Editar';
+
+  @override
+  String get editRoutine => 'Editar rotina';
 }

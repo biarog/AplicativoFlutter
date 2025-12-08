@@ -177,5 +177,7 @@
     "copyToClipboard": "GitHub链接已复制到剪贴板！",
     "thankYouMessage": "感谢您使用我们的应用！",
     "fitnessGoalsMessage": "我们希望它能帮助您实现您的健身目标。",
-    "close": "关闭"
+    "close": "关闭",
+    "edit": "编辑",
+    "editRoutine": "编辑计划"
   }

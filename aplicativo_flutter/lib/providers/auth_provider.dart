@@ -227,6 +227,121 @@ class AuthRepository {
     }
   }
 
+  // ==================== SCHEDULE METHODS ====================
+
+  /// Save weekly schedule to Firestore
+  Future<void> saveScheduleForUser(String uid, Map<String, dynamic> scheduleJson) async {
+    final docRef = _firestore.collection('users').doc(uid);
+    try {
+      await docRef.set({
+        'schedule': scheduleJson,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      debugPrint('📅 Schedule saved to Firestore for user $uid');
+    } catch (e) {
+      debugPrint('❌ Failed to save schedule for user $uid: $e');
+      rethrow;
+    }
+  }
+
+  /// Fetch weekly schedule from Firestore
+  Future<Map<String, dynamic>?> fetchScheduleForUser(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      if (!doc.exists) return null;
+      final data = doc.data();
+      if (data == null) return null;
+      final schedule = data['schedule'];
+      if (schedule is Map) {
+        return Map<String, dynamic>.from(schedule);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ Failed to fetch schedule for user $uid: $e');
+      return null;
+    }
+  }
+
+  // ==================== COMPLETED ROUTINES METHODS ====================
+
+  /// Save completed routines to Firestore (with automatic cleanup of entries older than 2 months)
+  Future<void> saveCompletedRoutinesForUser(String uid, Map<String, List<String>> completedRoutines) async {
+    final docRef = _firestore.collection('users').doc(uid);
+    
+    // Cleanup: Remove dates older than 2 months
+    final twoMonthsAgo = DateTime.now().subtract(const Duration(days: 60));
+    final cleanedData = <String, List<String>>{};
+    
+    completedRoutines.forEach((routineId, dates) {
+      final filteredDates = dates.where((dateStr) {
+        try {
+          final date = DateTime.parse(dateStr);
+          return date.isAfter(twoMonthsAgo);
+        } catch (e) {
+          return false; // Remove invalid dates
+        }
+      }).toList();
+      
+      if (filteredDates.isNotEmpty) {
+        cleanedData[routineId] = filteredDates;
+      }
+    });
+    
+    try {
+      await docRef.set({
+        'completedRoutines': cleanedData,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      debugPrint('✅ Completed routines saved to Firestore for user $uid (cleaned old entries)');
+    } catch (e) {
+      debugPrint('❌ Failed to save completed routines for user $uid: $e');
+      rethrow;
+    }
+  }
+
+  /// Fetch completed routines from Firestore (automatically filters out entries older than 2 months)
+  Future<Map<String, Set<String>>?> fetchCompletedRoutinesForUser(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      if (!doc.exists) return null;
+      final data = doc.data();
+      if (data == null) return null;
+      final completedRoutines = data['completedRoutines'];
+      
+      if (completedRoutines is! Map) return null;
+      
+      // Cleanup: Remove dates older than 2 months
+      final twoMonthsAgo = DateTime.now().subtract(const Duration(days: 60));
+      final result = <String, Set<String>>{};
+      
+      completedRoutines.forEach((key, value) {
+        if (value is List) {
+          final filteredDates = value
+              .whereType<String>()
+              .where((dateStr) {
+                try {
+                  final date = DateTime.parse(dateStr);
+                  return date.isAfter(twoMonthsAgo);
+                } catch (e) {
+                  return false;
+                }
+              })
+              .toSet();
+          
+          if (filteredDates.isNotEmpty) {
+            result[key.toString()] = filteredDates;
+          }
+        }
+      });
+      
+      debugPrint('📊 Completed routines fetched from Firestore for user $uid');
+      return result;
+    } catch (e) {
+      debugPrint('❌ Failed to fetch completed routines for user $uid: $e');
+      return null;
+    }
+  }
+
   Future<List<Map<String, dynamic>>?> _fetchRoutinesForUser(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();

@@ -383,6 +383,20 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
                   ],
                 ),
               ] else if (ex is CountingExercise) ...[
+                // If exercise has a YouTube link, show the player
+                if (ex.youtubeUrl != null && ex.youtubeUrl!.isNotEmpty) ...[
+                  SizedBox(
+                    height: 200,
+                    child: YouTubePlayerWidget(
+                      url: ex.youtubeUrl!,
+                      startAt: Duration(seconds: ex.youtubeStartSeconds ?? 0),
+                      autoPlay: false,
+                      onPlay: () {},
+                      onPlaybackStateChanged: (playing) {},
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 Center(
                   child: Column(
                     children: [

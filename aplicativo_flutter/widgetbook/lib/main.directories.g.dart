@@ -2,7 +2,6 @@
 // coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_import, prefer_relative_imports, directives_ordering
-// ignore_for_file: deprecated_member_use
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
@@ -16,14 +15,20 @@ import 'package:widgetbook_workspace/dialogs/account_settings_dialog.dart'
     as _widgetbook_workspace_dialogs_account_settings_dialog;
 import 'package:widgetbook_workspace/dialogs/create_account_dialog.dart'
     as _widgetbook_workspace_dialogs_create_account_dialog;
+import 'package:widgetbook_workspace/dialogs/credits_dialog.dart'
+    as _widgetbook_workspace_dialogs_credits_dialog;
 import 'package:widgetbook_workspace/dialogs/login_dialog.dart'
     as _widgetbook_workspace_dialogs_login_dialog;
 import 'package:widgetbook_workspace/main_app.dart'
     as _widgetbook_workspace_main_app;
 import 'package:widgetbook_workspace/screens/calendar_screen.dart'
     as _widgetbook_workspace_screens_calendar_screen;
+import 'package:widgetbook_workspace/screens/configure_schedule_screen.dart'
+    as _widgetbook_workspace_screens_configure_schedule_screen;
 import 'package:widgetbook_workspace/screens/create_routine_screen.dart'
     as _widgetbook_workspace_screens_create_routine_screen;
+import 'package:widgetbook_workspace/screens/edit_routine_screen.dart'
+    as _widgetbook_workspace_screens_edit_routine_screen;
 import 'package:widgetbook_workspace/screens/routine_player_screen.dart'
     as _widgetbook_workspace_screens_routine_player_screen;
 import 'package:widgetbook_workspace/widgets/calendar.dart'
@@ -51,11 +56,27 @@ final directories = <_widgetbook.WidgetbookNode>[
         ),
       ),
       _widgetbook.WidgetbookLeafComponent(
+        name: 'ConfigureScheduleScreen',
+        useCase: _widgetbook.WidgetbookUseCase(
+          name: 'Default',
+          builder: _widgetbook_workspace_screens_configure_schedule_screen
+              .buildConfigureScheduleScreenUseCase,
+        ),
+      ),
+      _widgetbook.WidgetbookLeafComponent(
         name: 'CreateRoutineScreen',
         useCase: _widgetbook.WidgetbookUseCase(
           name: 'Default',
           builder: _widgetbook_workspace_screens_create_routine_screen
               .buildCreateRoutineScreenUseCase,
+        ),
+      ),
+      _widgetbook.WidgetbookLeafComponent(
+        name: 'EditRoutineScreen',
+        useCase: _widgetbook.WidgetbookUseCase(
+          name: 'Default',
+          builder: _widgetbook_workspace_screens_edit_routine_screen
+              .buildEditRoutineScreenUseCase,
         ),
       ),
       _widgetbook.WidgetbookLeafComponent(
@@ -92,6 +113,14 @@ final directories = <_widgetbook.WidgetbookNode>[
         useCase: _widgetbook.WidgetbookUseCase(
           name: 'Default',
           builder: _widgetbook_workspace_dialogs_create_account_dialog
+              .buildCreateAccountDialogUseCase,
+        ),
+      ),
+      _widgetbook.WidgetbookLeafComponent(
+        name: 'CreditsDialog',
+        useCase: _widgetbook.WidgetbookUseCase(
+          name: 'Default',
+          builder: _widgetbook_workspace_dialogs_credits_dialog
               .buildCreateAccountDialogUseCase,
         ),
       ),

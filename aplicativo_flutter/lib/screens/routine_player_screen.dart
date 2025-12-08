@@ -391,6 +391,10 @@ class _RoutinePlayerScreenState extends ConsumerState<RoutinePlayerScreen> {
                       Text('${_setsRemaining ?? ex.sets}', style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
                       Text(AppLocalizations.of(context)!.reps(ex.reps), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600)),
+                      if (ex.weight != null) ...[
+                        const SizedBox(height: 12),
+                        Text('${ex.weight} ${AppLocalizations.of(context)!.weightKg}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+                      ],
                     ],
                   ),
                 ),
